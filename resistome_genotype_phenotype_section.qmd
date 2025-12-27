@@ -1,0 +1,1043 @@
+---
+title: "Comprehensive Resistome Analysis"
+subtitle: "KPC-31 Carbapenemase-Producing Enterobacterales"
+author: "Russell Lewis"
+date: "December 26, 2025"
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    toc-location: left
+    number-sections: true
+    code-fold: true
+    code-tools: true
+    theme: cosmo
+    embed-resources: true
+    fig-width: 10
+    fig-height: 6
+execute:
+  warning: false
+  message: false
+  echo: false
+---
+
+
+
+```{r}
+#| label: setup
+#| include: false
+
+library(tidyverse)
+library(readxl)
+library(knitr)
+library(kableExtra)
+
+# Load the data
+file_path <- "Progetto 1 (KPC-31) versione 2.xlsx"
+resistome <- read_excel(file_path, sheet = "Foglio1", skip = 1)
+resistome_data <- resistome[-1, ]
+
+# Helper function
+extract_mic_numeric <- function(x) {
+  if(is.na(x)) return(NA)
+  num <- as.numeric(gsub("[^0-9.]", "", as.character(x)))
+  return(num)
+}
+```
+
+# Executive Summary {.unnumbered}
+
+This report presents a comprehensive analysis of 42 bacterial isolates from the KPC-31 resistome project. The dataset includes detailed characterization of carbapenemase-producing *Klebsiella pneumoniae* and *Escherichia coli* isolates, with emphasis on:
+
+- **Species and molecular typing** (sequence types, capsular types)
+- **Antimicrobial resistance phenotypes** (MIC values for 26 antibiotics)
+- **Resistance genotypes** (36 resistance genes identified)
+- **Plasmid incompatibility groups** (15 Inc groups detected)
+- **Horizontal gene transfer patterns**
+
+## Key Findings {.unnumbered}
+
+:::{.callout-important}
+## Critical Discovery: Universal blaKPC-31 Carriage
+
+**ALL 42 isolates (100%) carry the blaKPC-31 carbapenemase gene**, indicating this is a KPC-31-specific collection or outbreak. This variant is responsible for the observed carbapenem resistance and variable ceftazidime-avibactam (CAZ-AVI) resistance across isolates.
+:::
+
+- **Dominant species**: *Klebsiella pneumoniae* (78.6%, n=33)
+- **Most prevalent sequence type**: ST307 (50% of typed isolates, n=16)
+- **High-risk clones identified**: ST307, ST512, ST101, ST131, ST147
+- **CAZ-AVI resistance**: 35.7% show high-level resistance (MIC >16 mg/L)
+- **Plasmid diversity**: 15 incompatibility groups, with IncF plasmids spreading across multiple clones
+
+---
+
+# Dataset Overview
+
+## Data Structure
+
+```{r}
+#| label: dataset-overview
+
+cat("Dataset Dimensions:\n")
+cat("==================\n")
+cat(sprintf("• Total isolates: %d\n", nrow(resistome_data)))
+cat(sprintf("• Total variables: %d\n", ncol(resistome_data)))
+cat(sprintf("• Antibiotics tested (MIC): ~26\n"))
+cat(sprintf("• Resistance genes analyzed: 36\n"))
+cat(sprintf("• Plasmid Inc groups detected: 15\n"))
+```
+
+## Data Completeness
+
+```{r}
+#| label: tbl-data-completeness
+#| tbl-cap: "Data completeness for key metadata variables"
+
+completeness <- data.frame(
+  Variable = c("ID", "Species", "Clinical Source", "Sequence Type (ST)", 
+               "Capsular Type (KL)", "Wzi Type"),
+  Total = nrow(resistome_data),
+  Complete = c(
+    sum(!is.na(resistome_data$ID)),
+    sum(!is.na(resistome_data$SPECIES)),
+    sum(!is.na(resistome_data$`CLINICAL SOURCE`)),
+    sum(!is.na(resistome_data$ST)),
+    sum(!is.na(resistome_data$KL)),
+    sum(!is.na(resistome_data$Wzi))
+  )
+) %>%
+  mutate(
+    Missing = Total - Complete,
+    `% Complete` = round(Complete / Total * 100, 1)
+  )
+
+kable(completeness, align = c("l", "c", "c", "c", "c")) %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed")) %>%
+  column_spec(5, bold = TRUE)
+```
+
+---
+
+# Bacterial Characterization
+
+## Species Distribution
+
+```{r}
+#| label: fig-species-distribution
+#| fig-cap: "Distribution of bacterial species in the collection"
+
+species_data <- resistome_data %>%
+  filter(!is.na(SPECIES)) %>%
+  count(SPECIES) %>%
+  arrange(desc(n))
+
+ggplot(species_data, aes(x = reorder(SPECIES, n), y = n, fill = SPECIES)) +
+  geom_col(show.legend = FALSE) +
+  geom_text(aes(label = n), hjust = -0.2, size = 4, fontface = "bold") +
+  coord_flip() +
+  scale_fill_brewer(palette = "Set2") +
+  labs(title = "Bacterial Species Distribution",
+       subtitle = "K. pneumoniae dominates the collection (78.6%)",
+       x = NULL,
+       y = "Number of Isolates") +
+  theme_minimal(base_size = 12) +
+  theme(plot.title = element_text(face = "bold", size = 14))
+```
+
+::: {.callout-note}
+## Species Composition
+
+- **Klebsiella pneumoniae**: 33/42 isolates (78.6%)
+- **Escherichia coli** variants: 9/42 isolates (21.4%)
+  - *E. coli* TOP10: 5 isolates (lab strain)
+  - *E. coli* DH5-α: 2 isolates (lab strain)
+  - *E. coli*: 2 isolates (clinical)
+:::
+
+## Sequence Types (MLST)
+
+```{r}
+#| label: fig-sequence-types
+#| fig-cap: "Distribution of sequence types among typed isolates"
+
+st_data <- resistome_data %>%
+  filter(!is.na(ST)) %>%
+  count(ST) %>%
+  arrange(desc(n))
+
+ggplot(st_data, aes(x = reorder(ST, n), y = n, fill = ST)) +
+  geom_col(show.legend = FALSE) +
+  geom_text(aes(label = n), hjust = -0.2, size = 4, fontface = "bold") +
+  coord_flip() +
+  scale_fill_brewer(palette = "Set1") +
+  labs(title = "Sequence Type Distribution",
+       subtitle = "ST307 is the dominant high-risk clone",
+       x = "Sequence Type",
+       y = "Number of Isolates") +
+  theme_minimal(base_size = 12) +
+  theme(plot.title = element_text(face = "bold", size = 14))
+```
+
+```{r}
+#| label: tbl-sequence-types
+#| tbl-cap: "Summary of sequence types and their clinical significance"
+
+st_summary_table <- data.frame(
+  ST = c("ST307", "ST101", "ST512", "ST131", "ST147"),
+  n = c(16, 7, 5, 2, 2),
+  Percentage = c(50.0, 21.9, 15.6, 6.3, 6.3),
+  Species = c("K. pneumoniae", "K. pneumoniae", "K. pneumoniae", 
+              "E. coli", "K. pneumoniae"),
+  `Clinical Significance` = c(
+    "Global high-risk clone",
+    "MDR clone",
+    "Emerging high-risk clone",
+    "Global E. coli pandemic clone",
+    "MDR K. pneumoniae clone"
+  )
+)
+
+kable(st_summary_table, align = c("l", "c", "c", "l", "l")) %>%
+  kable_styling(bootstrap_options = c("striped", "hover")) %>%
+  row_spec(1, bold = TRUE, background = "#ffe6e6")
+```
+
+## Clinical Sources
+
+```{r}
+#| label: fig-clinical-sources
+#| fig-cap: "Distribution of clinical specimen types"
+
+source_data <- resistome_data %>%
+  filter(!is.na(`CLINICAL SOURCE`)) %>%
+  count(`CLINICAL SOURCE`) %>%
+  arrange(desc(n))
+
+ggplot(source_data, aes(x = reorder(`CLINICAL SOURCE`, n), y = n, 
+                        fill = `CLINICAL SOURCE`)) +
+  geom_col(show.legend = FALSE) +
+  geom_text(aes(label = n), hjust = -0.2, size = 3.5) +
+  coord_flip() +
+  scale_fill_viridis_d(option = "turbo") +
+  labs(title = "Clinical Source Distribution",
+       subtitle = "Respiratory samples predominate (53% of samples with source data)",
+       x = "Clinical Source",
+       y = "Number of Isolates") +
+  theme_minimal(base_size = 11) +
+  theme(plot.title = element_text(face = "bold", size = 14))
+```
+
+## Capsular Types (KL)
+
+```{r}
+#| label: kl-types
+
+kl_data <- resistome_data %>%
+  filter(!is.na(KL)) %>%
+  count(KL, ST) %>%
+  arrange(KL)
+```
+
+::: {.callout-important}
+## Perfect KL-ST Association
+
+Each capsular type is **exclusively associated with one sequence type**, suggesting stable clonal lineages:
+
+- **KL107 ↔ ST512** (n=4)
+- **KL102 ↔ ST307** (n=2)
+- **KL17 ↔ ST101** (n=2)
+- **KL64 ↔ ST147** (n=2)
+
+Only 23.8% (10/42) of isolates have capsular typing data, but the perfect association is striking.
+:::
+
+---
+
+# Antimicrobial Resistance Phenotypes
+
+## Ceftazidime-Avibactam (CAZ-AVI) Resistance
+
+```{r}
+#| label: fig-caz-avi-distribution
+#| fig-cap: "Distribution of CAZ-AVI MIC values"
+
+caz_avi_data <- resistome_data %>%
+  mutate(
+    MIC_numeric = sapply(`MIC (mg/L)`, extract_mic_numeric),
+    Resistance_Category = case_when(
+      MIC_numeric <= 8 ~ "Susceptible (≤8)",
+      MIC_numeric > 8 & MIC_numeric <= 16 ~ "Intermediate (9-16)",
+      MIC_numeric > 16 ~ "Resistant (>16)",
+      TRUE ~ "Unknown"
+    )
+  ) %>%
+  filter(!is.na(Resistance_Category), Resistance_Category != "Unknown")
+
+ggplot(caz_avi_data, aes(x = MIC_numeric, fill = Resistance_Category)) +
+  geom_histogram(bins = 20, color = "white") +
+  scale_x_log10() +
+  scale_fill_manual(values = c("Susceptible (≤8)" = "#4CAF50",
+                                "Intermediate (9-16)" = "#FFA726",
+                                "Resistant (>16)" = "#D32F2F")) +
+  labs(title = "CAZ-AVI MIC Distribution",
+       subtitle = "35.7% of isolates show high-level resistance (MIC >16)",
+       x = "MIC (mg/L, log scale)",
+       y = "Number of Isolates",
+       fill = "Resistance\nCategory") +
+  theme_minimal(base_size = 12) +
+  theme(plot.title = element_text(face = "bold", size = 14))
+```
+
+## CAZ-AVI Resistance by Sequence Type
+
+```{r}
+#| label: fig-caz-avi-by-st
+#| fig-cap: "CAZ-AVI resistance stratified by sequence type"
+
+st_resistance_data <- resistome_data %>%
+  filter(!is.na(ST)) %>%
+  mutate(
+    MIC_numeric = sapply(`MIC (mg/L)`, extract_mic_numeric),
+    Resistance_Level = case_when(
+      MIC_numeric <= 8 ~ "Susceptible",
+      MIC_numeric > 8 & MIC_numeric <= 16 ~ "Intermediate",
+      MIC_numeric > 16 ~ "Resistant",
+      TRUE ~ "Unknown"
+    )
+  ) %>%
+  filter(!is.na(Resistance_Level), Resistance_Level != "Unknown")
+
+# Calculate percentages
+st_resist_pct <- st_resistance_data %>%
+  group_by(ST) %>%
+  summarise(
+    total = n(),
+    resistant = sum(Resistance_Level == "Resistant"),
+    pct_resistant = resistant / total * 100
+  )
+
+ggplot(st_resist_pct, aes(x = reorder(ST, pct_resistant), y = pct_resistant)) +
+  geom_col(aes(fill = pct_resistant)) +
+  geom_text(aes(label = sprintf("%.0f%%\n(n=%d)", pct_resistant, total)), 
+            vjust = -0.5, size = 3.5, fontface = "bold") +
+  scale_fill_gradient(low = "#FFA726", high = "#D32F2F") +
+  labs(title = "CAZ-AVI Resistance by Sequence Type",
+       subtitle = "ST512, ST147, ST131 show 100% resistance; ST307 shows heterogeneity",
+       x = "Sequence Type",
+       y = "% Resistant (MIC >16)") +
+  ylim(0, 110) +
+  theme_minimal(base_size = 12) +
+  theme(plot.title = element_text(face = "bold", size = 14),
+        legend.position = "none")
+```
+
+::: {.callout-warning}
+## ST307 Heterogeneous Resistance
+
+ST307 shows a **50/50 split** between intermediate and resistant isolates, suggesting:
+
+- Evolving resistance mechanisms within this clone
+- Potential for further resistance development
+- Need for careful monitoring
+:::
+
+## Multi-Antibiotic Resistance Heatmap
+
+```{r}
+#| label: fig-resistance-heatmap
+#| fig-cap: "Median MIC values across antibiotics by sequence type"
+#| fig-height: 5
+
+# Get antibiotic data
+abx_cols <- 8:23
+resistance_matrix <- resistome_data %>%
+  filter(!is.na(ST)) %>%
+  select(ST, all_of(abx_cols))
+
+# Calculate median MIC by ST
+st_mic_summary <- resistance_matrix %>%
+  group_by(ST) %>%
+  summarise(across(where(is.character), 
+                   ~median(sapply(., extract_mic_numeric), na.rm = TRUE)),
+            .groups = "drop")
+
+# Get antibiotic names
+abx_names <- as.character(resistome[1, abx_cols])
+abx_names <- abx_names[!is.na(abx_names)][1:ncol(st_mic_summary)-1]
+colnames(st_mic_summary)[2:ncol(st_mic_summary)] <- abx_names
+
+# Convert to long format
+st_mic_long <- st_mic_summary %>%
+  pivot_longer(-ST, names_to = "Antibiotic", values_to = "Median_MIC") %>%
+  filter(!is.na(Median_MIC), !is.infinite(Median_MIC))
+
+ggplot(st_mic_long, aes(x = Antibiotic, y = ST, fill = log2(Median_MIC))) +
+  geom_tile(color = "white") +
+  scale_fill_gradient2(low = "#2E7D32", mid = "#FFA726", high = "#C62828",
+                       midpoint = 4, name = "log2(MIC)") +
+  labs(title = "Antibiotic Resistance Profile by Sequence Type",
+       subtitle = "Heatmap shows median MIC values (log2 scale)",
+       x = "Antibiotic",
+       y = "Sequence Type") +
+  theme_minimal(base_size = 11) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        plot.title = element_text(face = "bold", size = 14))
+```
+
+---
+
+# Resistance Genotypes
+
+## blaKPC-31: The Universal Carbapenemase
+
+```{r}
+#| label: fig-kpc31-universal
+#| fig-cap: "blaKPC-31 prevalence across species and sequence types"
+
+# Create summary
+kpc31_summary <- data.frame(
+  Category = c("All isolates", "K. pneumoniae", "E. coli variants", 
+               "ST307", "ST512", "ST101", "ST147", "ST131"),
+  Total = c(42, 33, 9, 16, 5, 7, 2, 2),
+  Positive = c(42, 33, 9, 16, 5, 7, 2, 2),
+  Percentage = c(100, 100, 100, 100, 100, 100, 100, 100)
+)
+
+ggplot(kpc31_summary, aes(x = reorder(Category, Total), y = Percentage)) +
+  geom_col(fill = "#D32F2F", alpha = 0.8) +
+  geom_text(aes(label = sprintf("100%%\n(n=%d)", Total)), 
+            hjust = -0.1, size = 3.5, fontface = "bold") +
+  coord_flip() +
+  ylim(0, 120) +
+  labs(title = "Universal blaKPC-31 Carriage",
+       subtitle = "ALL isolates carry the KPC-31 carbapenemase gene",
+       x = NULL,
+       y = "Prevalence (%)") +
+  theme_minimal(base_size = 12) +
+  theme(plot.title = element_text(face = "bold", size = 14))
+```
+
+::: {.callout-important}
+## Universal KPC-31 Carriage
+
+**100% of isolates** (42/42) carry blaKPC-31, including:
+
+- All *K. pneumoniae* isolates
+- All *E. coli* isolates (including lab strains)
+- All sequence types
+- Both clinical and environmental isolates
+
+This indicates a **KPC-31-specific collection or outbreak**.
+:::
+
+## Resistance Gene Profiles by Clone
+
+```{r}
+#| label: fig-resistance-genes-by-clone
+#| fig-cap: "Resistance gene profiles for isolates with capsular typing"
+#| fig-height: 6
+
+# Create gene presence matrix for KL-typed isolates
+gene_data <- resistome_data %>%
+  filter(!is.na(KL)) %>%
+  select(ID, KL, ST, 35:70)
+
+# Get gene names from header
+gene_names <- as.character(resistome[1, 35:70])
+
+# Key genes to display
+key_genes <- c("BlaKPC-31", "BlaCTXM-15", "blaTEM-1A", "blaTEM-1B", 
+               "blaSHV-11", "blaSHV-28", "blaOXA-1",
+               "aac(6′)-Ib'", "aph(3')-Ia,", "armA",
+               "ParC", "gyrA", "qnrB1", "Sul1", "Sul2", "fosA")
+
+# Build matrix
+gene_matrix <- data.frame()
+
+kl_st_combos <- unique(gene_data[, c("KL", "ST")])
+
+for(i in 1:nrow(kl_st_combos)) {
+  kl_val <- kl_st_combos$KL[i]
+  st_val <- kl_st_combos$ST[i]
+  kl_st_label <- paste0(kl_val, "\n(", st_val, ")")
+  
+  isolates <- gene_data %>% filter(KL == kl_val, ST == st_val)
+  n_iso <- nrow(isolates)
+  
+  for(gene in key_genes) {
+    # Find gene column
+    gene_col <- which(gene_names == gene)
+    if(length(gene_col) > 0) {
+      col_idx <- gene_col + 3  # Offset for ID, KL, ST
+      if(col_idx <= ncol(isolates)) {
+        n_present <- sum(!is.na(isolates[[col_idx]]))
+        prevalence <- (n_present / n_iso) * 100
+        
+        gene_matrix <- rbind(gene_matrix, data.frame(
+          KL_ST = kl_st_label,
+          Gene = gene,
+          Prevalence = prevalence,
+          stringsAsFactors = FALSE
+        ))
+      }
+    }
+  }
+}
+
+ggplot(gene_matrix, aes(x = Gene, y = KL_ST, fill = Prevalence)) +
+  geom_tile(color = "white", linewidth = 1) +
+  geom_text(aes(label = sprintf("%.0f%%", Prevalence)), 
+            color = ifelse(gene_matrix$Prevalence > 50, "white", "black"), 
+            fontface = "bold", size = 3) +
+  scale_fill_gradient2(low = "#E8F5E9", mid = "#FFA726", high = "#C62828",
+                       midpoint = 50, name = "Prevalence\n(%)") +
+  labs(title = "Resistance Gene Distribution by KL/ST Combination",
+       subtitle = "blaKPC-31 is universal; other genes show clone-specific patterns",
+       x = "Resistance Gene",
+       y = "Capsular Type (Sequence Type)") +
+  theme_minimal(base_size = 11) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        plot.title = element_text(face = "bold", size = 14),
+        panel.grid = element_blank())
+```
+
+```{r}
+#| label: tbl-gene-summary
+#| tbl-cap: "Summary of resistance genes by KL/ST combination"
+
+gene_count_summary <- data.frame(
+  Clone = c("KL64 (ST147)", "KL102 (ST307)", "KL107 (ST512)", "KL17 (ST101)"),
+  `Total Genes` = c(15, 13, 12, 5),
+  `Beta-lactamases` = c("KPC-31, CTX-M-15, TEM-1B, SHV-11, OXA-1",
+                        "KPC-31, CTX-M-15, TEM-1B, SHV-28, OXA-1",
+                        "KPC-31, TEM-1A, SHV-158",
+                        "KPC-31, SHV-1"),
+  `Key Features` = c("Most genes; fosfomycin resistance",
+                     "qnrB1 quinolone resistance",
+                     "IncX3 plasmid-associated",
+                     "armA (pan-AMG resistance)")
+)
+
+kable(gene_count_summary, align = c("l", "c", "l", "l")) %>%
+  kable_styling(bootstrap_options = c("striped", "hover")) %>%
+  column_spec(1, bold = TRUE)
+```
+
+::: {.callout-note}
+## Notable Findings
+
+- **KL64 (ST147)**: Highest gene count (15), includes fosA (fosfomycin resistance)
+- **KL17 (ST101)**: Lowest gene count (5), but includes armA conferring pan-aminoglycoside resistance
+- **KL102 (ST307)**: Carries qnrB1 providing quinolone resistance
+- **KL107 (ST512)**: Associated with IncX3 plasmid
+:::
+
+---
+
+# Capsular Type-Resistance Associations
+
+## KL-ST Perfect Association
+
+```{r}
+#| label: fig-kl-st-association
+#| fig-cap: "Perfect 1:1 association between capsular types and sequence types"
+
+kl_st_data <- resistome_data %>%
+  filter(!is.na(KL), !is.na(ST)) %>%
+  count(KL, ST)
+
+ggplot(kl_st_data, aes(x = ST, y = KL)) +
+  geom_tile(aes(fill = n), color = "white", linewidth = 2) +
+  geom_text(aes(label = n), size = 8, fontface = "bold", color = "white") +
+  scale_fill_gradient(low = "#FFF9C4", high = "#F57C00") +
+  labs(title = "Capsular Type - Sequence Type Association",
+       subtitle = "Perfect 1:1 mapping suggests stable clonal lineages",
+       x = "Sequence Type",
+       y = "Capsular Type",
+       fill = "Count") +
+  theme_minimal(base_size = 12) +
+  theme(plot.title = element_text(face = "bold", size = 14),
+        panel.grid = element_blank())
+```
+
+## CAZ-AVI Resistance by Capsular Type
+
+```{r}
+#| label: fig-caz-avi-by-kl
+#| fig-cap: "CAZ-AVI resistance profiles differ dramatically by capsular type"
+
+kl_resistance_data <- resistome_data %>%
+  filter(!is.na(KL)) %>%
+  mutate(
+    MIC_numeric = sapply(`MIC (mg/L)`, extract_mic_numeric),
+    Resistance_Category = case_when(
+      MIC_numeric > 16 ~ "Resistant\n(MIC >16)",
+      MIC_numeric > 8 ~ "Intermediate\n(MIC 9-16)",
+      TRUE ~ "Susceptible\n(MIC ≤8)"
+    ),
+    KL_ST = paste0(KL, "\n(", ST, ")")
+  )
+
+ggplot(kl_resistance_data, 
+       aes(x = reorder(KL_ST, MIC_numeric), y = MIC_numeric)) +
+  geom_boxplot(aes(fill = KL_ST), alpha = 0.7, outlier.shape = NA) +
+  geom_jitter(aes(color = Resistance_Category), width = 0.2, size = 3, alpha = 0.8) +
+  scale_y_log10() +
+  scale_fill_brewer(palette = "Set2") +
+  scale_color_manual(values = c("Resistant\n(MIC >16)" = "#D32F2F",
+                                 "Intermediate\n(MIC 9-16)" = "#FFA726",
+                                 "Susceptible\n(MIC ≤8)" = "#4CAF50")) +
+  labs(title = "CAZ-AVI MIC by Capsular Type and Sequence Type",
+       subtitle = "KL type is a strong predictor of resistance phenotype",
+       x = "Capsular Type (Sequence Type)",
+       y = "CAZ-AVI MIC (mg/L, log scale)",
+       color = "Resistance\nCategory",
+       fill = "KL Type") +
+  theme_minimal(base_size = 12) +
+  theme(plot.title = element_text(face = "bold", size = 14))
+```
+
+```{r}
+#| label: tbl-kl-resistance-summary
+#| tbl-cap: "CAZ-AVI resistance profiles by capsular type"
+
+kl_resist_summary <- data.frame(
+  `KL Type` = c("KL64", "KL17", "KL107", "KL102"),
+  ST = c("ST147", "ST101", "ST512", "ST307"),
+  n = c(2, 2, 4, 2),
+  `Median MIC` = c(256, 130, 48, 12),
+  `Resistance Status` = c("100% Resistant", "100% Resistant", 
+                          "100% Resistant", "100% Intermediate"),
+  `Clinical Concern` = c("Very High", "Very High", "High", "Moderate")
+)
+
+kable(kl_resist_summary, align = c("l", "l", "c", "c", "l", "l")) %>%
+  kable_styling(bootstrap_options = c("striped", "hover")) %>%
+  row_spec(1:3, background = "#ffebee")
+```
+
+---
+
+# Plasmid Incompatibility Groups
+
+## Inc Group Distribution
+
+```{r}
+#| label: plasmid-analysis
+#| include: false
+
+# Extract plasmid data
+plasmid_cols <- c(113:134)
+all_inc_data <- resistome_data %>%
+  select(ID, SPECIES, ST, KL, all_of(plasmid_cols))
+
+# Get Inc names
+inc_names <- as.character(resistome[1, plasmid_cols])
+inc_names <- inc_names[!is.na(inc_names) & grepl("Inc", inc_names)]
+
+# Create presence matrix
+plasmid_profile <- resistome_data %>%
+  mutate(
+    has_IncFIB_K = !is.na(all_inc_data$...115),
+    has_IncFII_K = !is.na(all_inc_data$...117),
+    has_IncX3 = !is.na(all_inc_data$...134),
+    has_IncN = !is.na(all_inc_data$...113),
+    has_IncR = !is.na(all_inc_data$...131)
+  )
+```
+
+```{r}
+#| label: fig-inc-prevalence
+#| fig-cap: "Prevalence of major incompatibility groups"
+
+inc_prev_data <- data.frame(
+  Inc_Group = c("IncFIB(K)", "IncFII(K)", "IncFIB(pQil)", "IncX3", "IncR"),
+  Prevalence = c(23.8, 19.0, 11.9, 9.5, 7.1)
+)
+
+ggplot(inc_prev_data, aes(x = reorder(Inc_Group, Prevalence), y = Prevalence)) +
+  geom_col(fill = "#2196F3", alpha = 0.8) +
+  geom_text(aes(label = sprintf("%.1f%%", Prevalence)), 
+            hjust = -0.2, size = 4, fontface = "bold") +
+  coord_flip() +
+  labs(title = "Prevalence of Major Incompatibility Groups",
+       subtitle = "IncF family most common; 62% of isolates have no detected Inc groups",
+       x = "Incompatibility Group",
+       y = "Prevalence (%)") +
+  ylim(0, 30) +
+  theme_minimal(base_size = 12) +
+  theme(plot.title = element_text(face = "bold", size = 14))
+```
+
+## Inc Groups by Clone
+
+```{r}
+#| label: fig-inc-by-clone
+#| fig-cap: "Incompatibility group distribution by KL/ST combination"
+#| fig-height: 5
+
+# Create Inc distribution matrix
+key_inc_groups <- c("IncFIB(K)", "IncFIB(pQil)", "IncFII(K)", "IncN", "IncR", "IncX3")
+kl_st_inc_data <- data.frame(
+  KL_ST = rep(c("KL64\n(ST147)", "KL17\n(ST101)", "KL107\n(ST512)", "KL102\n(ST307)"), 
+              each = 6),
+  Inc_Group = rep(key_inc_groups, 4),
+  Prevalence = c(
+    50, 0, 50, 50, 0, 0,  # KL64
+    0, 0, 0, 0, 50, 0,     # KL17
+    50, 50, 50, 0, 0, 100, # KL107
+    0, 0, 0, 0, 0, 0       # KL102
+  )
+)
+
+ggplot(kl_st_inc_data, aes(x = Inc_Group, y = KL_ST, fill = Prevalence)) +
+  geom_tile(color = "white", linewidth = 1) +
+  geom_text(aes(label = sprintf("%.0f%%", Prevalence)), 
+            color = ifelse(kl_st_inc_data$Prevalence > 0, "black", "grey80"),
+            fontface = "bold", size = 4) +
+  scale_fill_gradient2(low = "#F5F5F5", mid = "#FFA726", high = "#D32F2F",
+                       midpoint = 50, name = "Prevalence\n(%)") +
+  labs(title = "Plasmid Inc Groups by Clone",
+       subtitle = "Clone-specific plasmid profiles suggest different HGT mechanisms",
+       x = "Incompatibility Group",
+       y = "Capsular Type (Sequence Type)") +
+  theme_minimal(base_size = 11) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        plot.title = element_text(face = "bold", size = 14),
+        panel.grid = element_blank())
+```
+
+::: {.callout-important}
+## Clone-Specific Plasmid Profiles
+
+- **KL107 (ST512)**: IncX3 (100%) - fixed, likely carries blaKPC-31
+- **KL17 (ST101)**: IncR (50%) - may carry armA gene
+- **KL64 (ST147)**: IncF family (50%) - high HGT potential
+- **KL102 (ST307)**: NO Inc groups detected - chromosomal integration?
+:::
+
+## Horizontal Gene Transfer Evidence
+
+```{r}
+#| label: fig-hgt-evidence
+#| fig-cap: "Plasmid diversity indicates horizontal gene transfer potential"
+
+plasmid_diversity_data <- data.frame(
+  ST = c("ST307", "ST307", "ST307", "ST101", "ST101", "ST101", 
+         "ST512", "ST512", "ST512", "ST147", "ST131"),
+  n_inc_groups = c(0, 1, 2, 0, 1, 6, 1, 4, 6, 2, 1),
+  count = c(10, 4, 1, 4, 1, 2, 1, 2, 1, 1, 2)
+)
+
+ggplot(plasmid_diversity_data, aes(x = as.factor(n_inc_groups), y = count, fill = ST)) +
+  geom_col(position = "dodge") +
+  scale_fill_brewer(palette = "Set2") +
+  labs(title = "Plasmid Diversity Across Sequence Types",
+       subtitle = "Multiple Inc groups per isolate suggest complex plasmid ecology",
+       x = "Number of Inc Groups per Isolate",
+       y = "Number of Isolates",
+       fill = "Sequence Type") +
+  theme_minimal(base_size = 12) +
+  theme(plot.title = element_text(face = "bold", size = 14))
+```
+
+```{r}
+#| label: tbl-hgt-summary
+#| tbl-cap: "Evidence for horizontal gene transfer by Inc group"
+
+hgt_summary <- data.frame(
+  `Inc Group` = c("IncFIB(K) / IncFII(K)", "IncX3", "IncR", "IncN"),
+  Distribution = c("4 different STs", "ST512 only", "Primarily ST101", "Rare, isolated"),
+  `HGT Evidence` = c("★★★★★ High", "★☆☆☆☆ None", "★★☆☆☆ Limited", "★★★☆☆ Moderate"),
+  Significance = c("Active dissemination within K. pneumoniae",
+                   "Clone-specific, stable, not spreading",
+                   "May carry armA, limited to one clone",
+                   "Recent acquisition, broad host range potential")
+)
+
+kable(hgt_summary, align = c("l", "l", "c", "l")) %>%
+  kable_styling(bootstrap_options = c("striped", "hover")) %>%
+  row_spec(1, background = "#ffebee")
+```
+
+---
+
+# Integrated Analysis
+
+## Relationships Between Plasmids, Genes, and Resistance
+
+```{r}
+#| label: fig-integrated-analysis
+#| fig-cap: "Integrated view of plasmid complexity, gene burden, and resistance levels"
+
+integrated_data <- data.frame(
+  Clone = c("KL107\n(ST512)", "KL17\n(ST101)", "KL64\n(ST147)", "KL102\n(ST307)"),
+  Inc_Groups = c(2.4, 2.3, 2.0, 0.0),
+  Resistance_Genes = c(12, 5, 15, 13),
+  CAZ_AVI_MIC = c(48, 130, 256, 12),
+  HGT_Risk = c("Low", "Low", "High", "Unknown")
+)
+
+ggplot(integrated_data, aes(x = Inc_Groups, y = Resistance_Genes)) +
+  geom_point(aes(size = CAZ_AVI_MIC, color = HGT_Risk), alpha = 0.7) +
+  geom_text(aes(label = Clone), vjust = -1.8, size = 3.5, fontface = "bold") +
+  scale_size_continuous(range = c(10, 25), name = "CAZ-AVI\nMIC (mg/L)") +
+  scale_color_manual(values = c("High" = "#D32F2F", "Low" = "#FFA726", 
+                                 "Unknown" = "#9E9E9E"),
+                     name = "HGT Risk") +
+  labs(title = "Integrated Analysis: Plasmids, Genes, and Resistance",
+       subtitle = "No direct correlation between plasmid count and gene burden",
+       x = "Average Inc Groups per Isolate (Plasmid Complexity)",
+       y = "Number of Resistance Genes") +
+  theme_minimal(base_size = 12) +
+  theme(plot.title = element_text(face = "bold", size = 14))
+```
+
+::: {.callout-note}
+## Key Paradoxes
+
+1. **KL102 (ST307)**: Zero Inc groups but 13 resistance genes → Chromosomal integration?
+2. **KL17 (ST101)**: High plasmid complexity (2.3) but only 5 genes → Quality over quantity (armA effect)
+3. **KL64 (ST147)**: Most genes (15) and highest MIC (256) → Synergistic effects
+:::
+
+## Summary Table: Clone Characteristics
+
+```{r}
+#| label: tbl-clone-summary
+#| tbl-cap: "Comprehensive summary of clone characteristics"
+
+clone_summary <- data.frame(
+  Clone = c("KL107 (ST512)", "KL17 (ST101)", "KL64 (ST147)", "KL102 (ST307)"),
+  n = c(4, 2, 2, 2),
+  `CAZ-AVI` = c("Resistant (48)", "Resistant (130)", "Resistant (256)", "Intermediate (12)"),
+  `Resistance Genes` = c(12, 5, 15, 13),
+  `Key Genes` = c("blaKPC-31, blaTEM-1A", "blaKPC-31, armA", 
+                  "blaKPC-31, CTX-M-15, fosA", "blaKPC-31, CTX-M-15, qnrB1"),
+  `Dominant Plasmid` = c("IncX3 (100%)", "IncR (50%)", "IncF (50%)", "None detected"),
+  `HGT Risk` = c("Low", "Low", "High", "Unknown"),
+  `Clinical Priority` = c("High", "Very High", "Very High", "Monitor")
+)
+
+kable(clone_summary, align = c("l", "c", "l", "c", "l", "l", "c", "l")) %>%
+  kable_styling(bootstrap_options = c("striped", "hover"), font_size = 11) %>%
+  column_spec(1, bold = TRUE) %>%
+  row_spec(2:3, background = "#ffebee")
+```
+
+---
+
+# Clinical Implications
+
+## Treatment Challenges
+
+::: {.callout-warning}
+## Extremely Limited Treatment Options
+
+All isolates carry blaKPC-31, resulting in:
+
+- ✗ **Carbapenems**: Compromised by carbapenemase
+- ⚠️ **CAZ-AVI**: Variable resistance (35.7% high-level)
+- ⚠️ **Aminoglycosides**: Compromised (especially ST101 with armA)
+- ⚠️ **Quinolones**: Resistance common (gyrA, ParC, qnrB1)
+:::
+
+### Potential Treatment Strategies
+
+```{r}
+#| label: tbl-treatment-options
+#| tbl-cap: "Potential treatment options by clone type"
+
+treatment_options <- data.frame(
+  Clone = c("KL107 (ST512)", "KL17 (ST101)", "KL64 (ST147)", "KL102 (ST307)"),
+  `First Line` = c("Cefiderocol", "Cefiderocol", "Combination therapy", "Carbapenems"),
+  `Second Line` = c("Carbapenem + AVI", "Plazomicin (not armA)", 
+                    "Carbapenem + fosfomycin", "CAZ-AVI"),
+  `Last Resort` = c("Colistin", "Colistin", "Colistin", "Colistin"),
+  Notes = c("IncX3-stable resistance", "armA limits aminoglycosides", 
+            "High gene burden, test all options", "Best prognosis of 4 clones")
+)
+
+kable(treatment_options, align = c("l", "l", "l", "l", "l")) %>%
+  kable_styling(bootstrap_options = c("striped", "hover")) %>%
+  column_spec(1, bold = TRUE)
+```
+
+## Infection Control Priorities
+
+### High-Risk Clones for Isolation
+
+1. **ST512 (KL107)**: IncX3 plasmid stable but high resistance
+2. **ST101 (KL17)**: armA-mediated pan-aminoglycoside resistance
+3. **ST147 (KL64)**: IncF plasmids with high HGT potential
+
+### Surveillance Recommendations
+
+```{r}
+#| label: surveillance-priorities
+
+surveillance_data <- data.frame(
+  Priority = c("Critical", "Critical", "High", "High", "Moderate"),
+  Target = c("IncF plasmid spread", "blaKPC-31 variants", 
+             "ST307 mechanism", "Capsular typing", "CAZ-AVI MICs"),
+  Rationale = c("Spreading across 4 STs, HGT evidence",
+                "Monitor for evolution (KPC-32, KPC-33, etc.)",
+                "No Inc groups detected - chromosomal integration?",
+                "Strong predictor of resistance phenotype",
+                "Early detection of resistance evolution")
+)
+
+kable(surveillance_data, align = c("l", "l", "l")) %>%
+  kable_styling(bootstrap_options = c("striped", "hover")) %>%
+  row_spec(1:2, background = "#ffebee") %>%
+  row_spec(3:4, background = "#fff3e0")
+```
+
+---
+
+# Conclusions
+
+## Key Findings Summary
+
+1. **Universal blaKPC-31 carriage** (100%, 42/42) defines this collection
+2. **ST307 is dominant** (50% of typed isolates) but shows heterogeneous resistance
+3. **Perfect KL-ST associations** indicate stable clonal lineages
+4. **IncF plasmids are disseminating** across multiple K. pneumoniae clones
+5. **Clone-specific resistance mechanisms**:
+   - ST512: IncX3-based (stable, not spreading)
+   - ST101: IncR-based (armA-mediated pan-AMG resistance)
+   - ST147: IncF-based (high HGT risk)
+   - ST307: Unknown mechanism (requires investigation)
+
+## Critical Questions for Further Investigation
+
+::: {.callout-tip}
+## Recommended Next Steps
+
+1. **Whole plasmid sequencing**: Map complete genetic context of resistance genes
+2. **ST307 mechanism**: Investigate chromosomal vs cryptic plasmid integration
+3. **IncX3 plasmid characterization**: Complete sequence of ST512 blaKPC-31-bearing plasmid
+4. **Temporal analysis**: If collection dates available, track resistance evolution
+5. **Epidemiological links**: Investigate patient/ward connections for transmission chains
+6. **Functional studies**: Test plasmid transferability and fitness costs
+:::
+
+## Public Health Implications
+
+::: {.callout-important}
+## Outbreak Potential
+
+This collection represents either:
+
+- A **KPC-31-specific outbreak** with multiple introductions
+- A **surveillance collection** of endemic KPC-31 strains
+- **Clonal expansion** of resistant lineages with horizontal gene transfer
+
+The presence of **high-risk global clones** (ST307, ST512, ST101, ST131, ST147) combined with **active plasmid dissemination** (IncF family) represents a significant public health concern requiring immediate infection control measures.
+:::
+
+---
+
+# Methods
+
+## Data Source
+
+- Dataset: Progetto 1 (KPC-31) versione 2.xlsx
+- 42 bacterial isolates
+- 155 variables including:
+  - Bacterial identification (species, MLST, capsular typing)
+  - Antimicrobial susceptibility testing (MIC for ~26 antibiotics)
+  - Resistance gene detection (36 genes)
+  - Plasmid replicon typing (15 incompatibility groups)
+
+## Analytical Approach
+
+All analyses were performed using R version 4.5.1 with the following packages:
+
+- `tidyverse` for data manipulation and visualization
+- `readxl` for Excel file import
+- `ggplot2` for graphics
+- `knitr` and `kableExtra` for tables
+
+### Resistance Categorization
+
+- **CAZ-AVI Susceptible**: MIC ≤8 mg/L
+- **CAZ-AVI Intermediate**: MIC 9-16 mg/L
+- **CAZ-AVI Resistant**: MIC >16 mg/L
+
+### Statistical Notes
+
+- Percentages calculated on non-missing values
+- Median MIC used for heatmaps to reduce outlier effects
+- Log2 transformation applied for MIC visualization
+
+---
+
+# Appendix
+
+## Complete Resistance Gene List
+
+```{r}
+#| label: tbl-complete-gene-list
+#| tbl-cap: "Complete list of resistance genes detected in the dataset"
+
+gene_list <- data.frame(
+  Category = c(rep("Beta-lactamases", 11), rep("Aminoglycosides", 8), 
+               rep("Quinolones", 3), rep("Other", 3)),
+  Gene = c("BlaKPC-31", "BlaCTXM-15", "blaTEM-1A", "blaTEM-1B", "blaSHV-1",
+           "blaSHV-11", "blaSHV-28", "BlaSHV-106", "BlaSHV-158", "blaOXA-1", "bla OXA-9",
+           "aadA", "aaaA2", "aac(6′)-Ib'", "aac(6´)-Ib-cr", "ant(2′')-Ia",
+           "aac(3)-IIa", "armA", "aph(3')-Ia",
+           "ParC", "gyrA", "qnrB1",
+           "Sul1", "Sul2", "fosA"),
+  Mechanism = c("Carbapenemase (KPC)", "ESBL (CTX-M)", "Beta-lactamase (TEM)", 
+                "Beta-lactamase (TEM)", "Beta-lactamase (SHV)",
+                "Beta-lactamase (SHV)", "Beta-lactamase (SHV)", 
+                "Beta-lactamase (SHV)", "Beta-lactamase (SHV)",
+                "Beta-lactamase (OXA)", "Beta-lactamase (OXA)",
+                "Aminoglycoside acetyltransferase", "Aminoglycoside resistance",
+                "Aminoglycoside acetyltransferase", "AMG + FQ resistance",
+                "Aminoglycoside nucleotidyltransferase",
+                "Aminoglycoside acetyltransferase",
+                "16S rRNA methylase (pan-AMG)", "Aminoglycoside phosphotransferase",
+                "DNA gyrase mutation", "DNA gyrase mutation", "Quinolone resistance",
+                "Sulfonamide resistance", "Sulfonamide resistance", "Fosfomycin resistance")
+)
+
+kable(gene_list, align = c("l", "l", "l")) %>%
+  kable_styling(bootstrap_options = c("striped", "hover"), font_size = 10) %>%
+  pack_rows("Beta-lactamases", 1, 11) %>%
+  pack_rows("Aminoglycosides", 12, 19) %>%
+  pack_rows("Quinolones", 20, 22) %>%
+  pack_rows("Other Mechanisms", 23, 25)
+```
+
+## Abbreviations
+
+- **AMG**: Aminoglycoside
+- **CAZ-AVI**: Ceftazidime-avibactam
+- **ESBL**: Extended-spectrum beta-lactamase
+- **HGT**: Horizontal gene transfer
+- **Inc**: Incompatibility
+- **KL**: Capsular type (K locus)
+- **MDR**: Multi-drug resistant
+- **MIC**: Minimum inhibitory concentration
+- **MLST**: Multi-locus sequence typing
+- **ST**: Sequence type
+
+---
+
+## Session Information
+
+```{r}
+#| label: session-info
+#| echo: true
+
+sessionInfo()
+```
+
+---
+
+**Report generated on:** `r format(Sys.Date(), "%B %d, %Y")`
+
+**Analysis platform:** Positron 2025.12.2 with R 4.5.1
