@@ -1,0 +1,27 @@
+project:
+  type: website
+  output-dir: docs
+
+website:
+  title: "KPC-31 Resistome Analysis"
+  navbar:
+    left:
+      - text: "Home"
+        file: index.qmd
+      - text: "Full Report"
+        file: resistome_analysis_report.qmd
+      - text: "About"
+        file: about.qmd
+    right:
+      - icon: github
+        href: https://github.com/YOUR-USERNAME/YOUR-REPO-NAME
+  page-footer:
+    center: "© 2025 KPC-31 Resistome Project"
+
+format:
+  html:
+    theme: cosmo
+    css: styles.css
+    toc: true
+    code-fold: true
+    code-tools: true

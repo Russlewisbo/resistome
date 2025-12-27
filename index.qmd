@@ -1,0 +1,119 @@
+---
+title: "KPC-31 Resistome Analysis Project"
+subtitle: "Comprehensive Analysis of Carbapenemase-Producing Enterobacterales"
+---
+
+## Welcome
+
+This website presents a comprehensive genomic and phenotypic analysis of 42 bacterial isolates from the KPC-31 resistome project. The collection includes carbapenemase-producing *Klebsiella pneumoniae* and *Escherichia coli* isolates with detailed molecular characterization.
+
+::: {.callout-important}
+## Critical Finding
+
+**ALL 42 isolates (100%) carry the blaKPC-31 carbapenemase gene**, making this a KPC-31-specific collection with significant clinical and epidemiological implications.
+:::
+
+## Quick Summary
+
+:::: {.columns}
+
+::: {.column width="50%"}
+### Dataset Overview
+- **42 bacterial isolates**
+- **155 variables analyzed**
+- **26 antibiotics tested**
+- **36 resistance genes detected**
+- **15 plasmid Inc groups identified**
+:::
+
+::: {.column width="50%"}
+### Key Findings
+- 78.6% *K. pneumoniae*
+- ST307 most prevalent (50%)
+- 100% blaKPC-31 positive
+- High CAZ-AVI resistance (35.7%)
+- Active plasmid dissemination
+:::
+
+::::
+
+## Analysis Sections
+
+### [Full Report](resistome_analysis_report.qmd) {.unnumbered}
+
+Access the complete analysis including:
+
+- **Bacterial Characterization**: Species distribution, sequence types (ST), capsular types (KL)
+- **Resistance Phenotypes**: MIC distributions for 26 antibiotics, resistance patterns by clone
+- **Resistance Genotypes**: Comprehensive gene profiling, blaKPC-31 analysis
+- **Plasmid Analysis**: Incompatibility groups, horizontal gene transfer evidence
+- **Clinical Implications**: Treatment recommendations, infection control priorities
+
+## Highlights
+
+::: {.panel-tabset}
+
+### Species Distribution
+
+*Klebsiella pneumoniae* dominates the collection (78.6%, n=33), with *E. coli* variants comprising 21.4%.
+
+### High-Risk Clones
+
+Five high-risk sequence types identified:
+- **ST307** (n=16): Global high-risk clone with heterogeneous resistance
+- **ST512** (n=5): IncX3 plasmid-associated, 100% CAZ-AVI resistant
+- **ST101** (n=7): armA-mediated pan-aminoglycoside resistance
+- **ST147** (n=2): IncF plasmids with high HGT potential
+- **ST131** (n=2): E. coli pandemic clone
+
+### Plasmid Findings
+
+- **IncF plasmids** spreading across 4 different sequence types
+- **IncX3** fixed in ST512 (100% prevalence)
+- **62%** of isolates have no detectable Inc groups (chromosomal integration?)
+
+### Clinical Impact
+
+Limited treatment options due to:
+- Universal blaKPC-31 carriage
+- Variable CAZ-AVI resistance (35.7% high-level)
+- Multiple resistance mechanisms per isolate
+- Active horizontal gene transfer
+
+:::
+
+## Key Visualizations
+
+The full report contains interactive visualizations showing:
+
+- Species and sequence type distributions
+- CAZ-AVI resistance patterns by clone
+- Multi-antibiotic resistance heatmaps
+- Resistance gene profiles
+- Plasmid incompatibility group networks
+- Integrated analysis of plasmids, genes, and phenotypes
+
+## Study Significance
+
+This analysis reveals:
+
+1. **Universal blaKPC-31 dissemination** across multiple high-risk clones
+2. **Perfect KL-ST associations** indicating stable clonal lineages
+3. **Clone-specific resistance mechanisms** (plasmid-based vs chromosomal)
+4. **Active horizontal gene transfer** of IncF plasmids within *K. pneumoniae*
+5. **Urgent need for infection control** measures
+
+::: {.callout-warning}
+## Public Health Concern
+
+The combination of high-risk global clones (ST307, ST512, ST101, ST131, ST147) with active plasmid dissemination represents a significant public health threat requiring immediate intervention.
+:::
+
+## Navigation
+
+- **[Full Report](resistome_analysis_report.qmd)**: Complete analysis with all figures and tables
+- **[About](about.qmd)**: Methods, data sources, and technical details
+
+---
+
+*Last updated: December 27, 2025*

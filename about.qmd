@@ -1,0 +1,176 @@
+---
+title: "About This Project"
+---
+
+## Project Overview
+
+This website presents a comprehensive analysis of 42 bacterial isolates from the KPC-31 resistome project, focusing on carbapenemase-producing *Klebsiella pneumoniae* and *Escherichia coli*.
+
+## Data Source
+
+**Dataset**: Progetto 1 (KPC-31) versione 2.xlsx
+
+The dataset includes:
+- 42 bacterial isolates
+- 155 variables covering:
+  - Bacterial identification (species, MLST, capsular typing)
+  - Antimicrobial susceptibility testing (MIC for ~26 antibiotics)
+  - Resistance gene detection (36 genes)
+  - Plasmid replicon typing (15 incompatibility groups)
+
+## Methodology
+
+### Bacterial Characterization
+
+- **Species identification**: Standard microbiological methods
+- **Multi-locus sequence typing (MLST)**: Sequence type determination
+- **Capsular typing (KL)**: K-locus characterization
+- **Wzi typing**: Capsule synthesis region analysis
+
+### Antimicrobial Susceptibility Testing
+
+MIC (Minimum Inhibitory Concentration) values determined for approximately 26 antibiotics including:
+- Beta-lactams (including carbapenems)
+- Beta-lactam/beta-lactamase inhibitor combinations (CAZ-AVI, PIP-TAZ)
+- Aminoglycosides
+- Quinolones
+- Colistin
+
+**Resistance Interpretation**:
+- CAZ-AVI Susceptible: MIC ≤8 mg/L
+- CAZ-AVI Intermediate: MIC 9-16 mg/L
+- CAZ-AVI Resistant: MIC >16 mg/L
+
+### Molecular Analysis
+
+#### Resistance Gene Detection
+36 resistance genes analyzed including:
+- **Beta-lactamases**: blaKPC-31, blaCTX-M-15, blaTEM, blaSHV variants, blaOXA
+- **Aminoglycoside resistance**: aac, aph, ant genes, armA (16S rRNA methylase)
+- **Quinolone resistance**: qnrB1, gyrA/ParC mutations
+- **Other mechanisms**: Sul1/Sul2 (sulfonamides), fosA (fosfomycin)
+
+#### Plasmid Typing
+15 incompatibility groups detected:
+- IncFIB(K), IncFII(K) - K. pneumoniae-specific IncF plasmids
+- IncX3 - Small mobilizable plasmid
+- IncR - Broad host range
+- IncN - Broad host range
+- Multiple other Inc groups
+
+### Data Analysis
+
+All analyses performed using:
+- **R version**: 4.5.1
+- **Platform**: Positron 2025.12.2
+- **Key packages**:
+  - `tidyverse` (v2.0.0) - data manipulation and visualization
+  - `readxl` (v1.4.3) - Excel file import
+  - `ggplot2` (v4.0.1) - graphics
+  - `knitr` and `kableExtra` - table formatting
+
+### Statistical Methods
+
+- Descriptive statistics (counts, percentages, medians)
+- Log2 transformation for MIC visualization
+- Hierarchical clustering for resistance patterns
+- Chi-square and Fisher's exact tests where appropriate
+
+## Limitations
+
+1. **Sample size**: Limited to 42 isolates
+2. **Capsular typing**: Only 23.8% (10/42) isolates have KL typing
+3. **Missing data**: Variable completeness across different data types
+4. **Plasmid detection**: 62% of isolates have no detectable Inc groups (possible chromosomal integration or novel plasmids)
+5. **Cross-sectional design**: No temporal or longitudinal data available
+
+## Key Definitions
+
+### Molecular Typing
+
+- **ST (Sequence Type)**: Classification based on multi-locus sequence typing (MLST) of housekeeping genes
+- **KL (Capsular Type)**: Classification based on K-locus genetic structure
+- **High-risk clone**: Globally disseminated sequence types associated with multidrug resistance and virulence
+
+### Resistance Mechanisms
+
+- **Carbapenemase**: Enzyme that hydrolyzes carbapenem antibiotics (e.g., KPC-31)
+- **ESBL**: Extended-spectrum beta-lactamase (e.g., CTX-M-15)
+- **16S rRNA methylase**: Enzyme conferring pan-aminoglycoside resistance (e.g., armA)
+
+### Plasmid Biology
+
+- **Inc group**: Incompatibility group - plasmids classification based on replication systems
+- **HGT**: Horizontal gene transfer - movement of genetic material between bacteria
+- **Conjugation**: Transfer of plasmids between bacteria via cell-to-cell contact
+
+## Data Availability
+
+The analysis code and this website are available on GitHub. The raw dataset is not publicly available due to potential patient privacy concerns.
+
+## Reproducibility
+
+This analysis is fully reproducible. All code used to generate the figures and tables is embedded in the Quarto documents and can be viewed using the "Code" buttons throughout the report.
+
+## AI Assistance Disclosure
+
+::: {.callout-note}
+This analysis was conducted with AI assistance (Databot in Positron) under human direction. All findings should be verified by qualified microbiologists and epidemiologists before clinical or public health decisions.
+:::
+
+## Contact
+
+For questions about this analysis, please contact:
+
+[Your contact information here]
+
+## Acknowledgments
+
+- Data collection and laboratory analysis: [Your team/institution]
+- Bioinformatics analysis: [Your name/team]
+- Computational resources: [Institution/facility]
+
+## Citation
+
+If you use this analysis or data, please cite:
+
+[Your preferred citation format]
+
+---
+
+## Technical Notes
+
+### Website Generation
+
+This website was created using:
+- **Quarto** (v1.4+) - Scientific and technical publishing system
+- **GitHub Pages** - Free static website hosting
+- **R Markdown** - Dynamic document generation
+
+### Rendering
+
+To regenerate this website locally:
+
+```bash
+# Install Quarto (https://quarto.org/docs/get-started/)
+
+# Clone the repository
+git clone https://github.com/YOUR-USERNAME/YOUR-REPO-NAME.git
+cd YOUR-REPO-NAME
+
+# Render the website
+quarto render
+
+# Preview locally
+quarto preview
+```
+
+### Software Versions
+
+- R: 4.5.1
+- Quarto: 1.4+
+- RStudio/Positron: 2025.12.2
+
+---
+
+*Last updated: December 27, 2025*
