@@ -186,14 +186,14 @@
     "href": "resistome_analysis_report.html",
     "title": "Comprehensive Resistome Analysis",
     "section": "",
-    "text": "Note\n\n\n\nThis report was generated using AI under general human direction. At the time of generation, the contents have not been comprehensively reviewed by a human analyst."
+    "text": "This report presents a comprehensive analysis of 42 bacterial isolates from the KPC-31 resistome project. The dataset includes detailed characterization of carbapenemase-producing Klebsiella pneumoniae and Escherichia coli isolates, with emphasis on:\n\nSpecies and molecular typing (sequence types, capsular types)\nAntimicrobial resistance phenotypes (MIC values for 26 antibiotics)\nResistance genotypes (36 resistance genes identified)\nPlasmid incompatibility groups (15 Inc groups detected)\nHorizontal gene transfer patterns\n\n\n\n\n\n\n\n\n\nImportantCritical Discovery: Universal blaKPC-31 Carriage\n\n\n\nALL 42 isolates (100%) carry the blaKPC-31 carbapenemase gene, indicating this is a KPC-31-specific collection or outbreak. This variant is responsible for the observed carbapenem resistance and variable ceftazidime-avibactam (CAZ-AVI) resistance across isolates.\n\n\n\nDominant species: Klebsiella pneumoniae (78.6%, n=33)\nMost prevalent sequence type: ST307 (50% of typed isolates, n=16)\nHigh-risk clones identified: ST307, ST512, ST101, ST131, ST147\nCAZ-AVI resistance: 35.7% show high-level resistance (MIC &gt;16 mg/L)\nPlasmid diversity: 15 incompatibility groups, with IncF plasmids spreading across multiple clones"
   },
   {
     "objectID": "resistome_analysis_report.html#key-findings",
     "href": "resistome_analysis_report.html#key-findings",
     "title": "Comprehensive Resistome Analysis",
-    "section": "Key Findings",
-    "text": "Key Findings\n\n\n\n\n\n\nImportantCritical Discovery: Universal blaKPC-31 Carriage\n\n\n\nALL 42 isolates (100%) carry the blaKPC-31 carbapenemase gene, indicating this is a KPC-31-specific collection or outbreak. This variant is responsible for the observed carbapenem resistance and variable ceftazidime-avibactam (CAZ-AVI) resistance across isolates.\n\n\n\nDominant species: Klebsiella pneumoniae (78.6%, n=33)\nMost prevalent sequence type: ST307 (50% of typed isolates, n=16)\nHigh-risk clones identified: ST307, ST512, ST101, ST131, ST147\nCAZ-AVI resistance: 35.7% show high-level resistance (MIC &gt;16 mg/L)\nPlasmid diversity: 15 incompatibility groups, with IncF plasmids spreading across multiple clones"
+    "section": "",
+    "text": "ImportantCritical Discovery: Universal blaKPC-31 Carriage\n\n\n\nALL 42 isolates (100%) carry the blaKPC-31 carbapenemase gene, indicating this is a KPC-31-specific collection or outbreak. This variant is responsible for the observed carbapenem resistance and variable ceftazidime-avibactam (CAZ-AVI) resistance across isolates.\n\n\n\nDominant species: Klebsiella pneumoniae (78.6%, n=33)\nMost prevalent sequence type: ST307 (50% of typed isolates, n=16)\nHigh-risk clones identified: ST307, ST512, ST101, ST131, ST147\nCAZ-AVI resistance: 35.7% show high-level resistance (MIC &gt;16 mg/L)\nPlasmid diversity: 15 incompatibility groups, with IncF plasmids spreading across multiple clones"
   },
   {
     "objectID": "resistome_analysis_report.html#data-structure",
