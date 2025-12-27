@@ -88,7 +88,7 @@
     "href": "about.html#technical-notes",
     "title": "About This Project",
     "section": "Technical Notes",
-    "text": "Technical Notes\n\nWebsite Generation\nThis website was created using: - Quarto (v1.4+) - Scientific and technical publishing system - GitHub Pages - Free static website hosting - R Markdown - Dynamic document generation\n\n\nRendering\nTo regenerate this website locally:\n# Install Quarto (https://quarto.org/docs/get-started/)\n\n# Clone the repository\ngit clone https://github.com/YOUR-USERNAME/YOUR-REPO-NAME.git\ncd YOUR-REPO-NAME\n\n# Render the website\nquarto render\n\n# Preview locally\nquarto preview\n\n\nSoftware Versions\n\nR: 4.5.1\nQuarto: 1.4+\nRStudio/Positron: 2025.12.2\n\n\nLast updated: December 27, 2025"
+    "text": "Technical Notes\n\nWebsite Generation\nThis website was created using: - Quarto (v1.4+) - Scientific and technical publishing system - GitHub Pages - Free static website hosting - R Markdown - Dynamic document generation\n\n\nRendering\nTo regenerate this website locally:\n# Install Quarto (https://quarto.org/docs/get-started/)\n\n# Clone the repository\ngit clone https://github.com/Russlewisbo/resistome.git\ncd resistome\n\n# Render the website\nquarto render\n\n# Preview locally\nquarto preview\n\n\nSoftware Versions\n\nR: 4.5.1\nQuarto: 1.4+\nRStudio/Positron: 2025.12.2\n\n\nLast updated: December 27, 2025"
   },
   {
     "objectID": "WORKFLOW.html",

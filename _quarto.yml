@@ -14,7 +14,7 @@ website:
         file: about.qmd
     right:
       - icon: github
-        href: https://github.com/YOUR-USERNAME/YOUR-REPO-NAME
+        href: https://github.com/Russlewisbo/resistome
   page-footer:
     center: "© 2025 KPC-31 Resistome Project"
 
