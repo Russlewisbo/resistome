@@ -9,12 +9,12 @@ website:
       - text: "Home"
         file: index.qmd
       - text: "Full Report"
-        file: resistome_analysis_report.qmd
+        file: resistome_genotype_phenotype_final.qmd 
       - text: "About"
         file: about.qmd
     right:
       - icon: github
-        href: https://github.com/YOUR-USERNAME/YOUR-REPO-NAME
+        href: https://github.com/Russlewisbo/resistome
   page-footer:
     center: "© 2025 KPC-31 Resistome Project"
 

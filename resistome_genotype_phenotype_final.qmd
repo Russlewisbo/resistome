@@ -1,0 +1,729 @@
+# Genotype-Phenotype Relationships: Beta-lactamase Genes and Antimicrobial Susceptibility
+
+## Overview
+
+This section examines the relationship between beta-lactamase gene carriage (resistome) and antimicrobial susceptibility phenotypes (MIC values) across the 42 KPC-31-producing isolates. While all isolates carry *blaKPC-31*, they exhibit considerable diversity in additional beta-lactamase genes, which may contribute to variations in resistance profiles.
+
+```{r}
+#| label: setup-genotype-phenotype
+#| include: false
+
+# Load required libraries
+library(tidyverse)
+library(readxl)
+library(knitr)
+library(kableExtra)
+
+# Load and prepare data
+file_path <- "Progetto 1 (KPC-31) versione 2.xlsx"
+resistome_full <- read_excel(file_path, sheet = "Foglio1", skip = 0)
+
+# Extract proper column names from row 2
+row2 <- as.character(resistome_full[2, ])
+
+# Get data starting from row 3
+final_data <- resistome_full[3:nrow(resistome_full), ]
+
+# Set column names for metadata
+colnames(final_data)[1:6] <- c("ID", "SPECIES", "CLINICAL_SOURCE", "ST", "Wzi", "KL")
+
+# Set column names for antibiotics (column 7 is CAZ-AVI, 8-34 are other antibiotics)
+colnames(final_data)[7] <- "CAZ-AVI"
+antibiotic_names <- row2[8:34]
+colnames(final_data)[8:34] <- antibiotic_names
+
+# Set column names for beta-lactamase genes
+betalactamase_names <- c("BlaCTXM-15", "bla_TEM-1", "blaTEM-1A", "blaTEM-1B", 
+                         "blaSHV-1", "blaSHV-11", "blaSHV-28", "BlaSHV-106", 
+                         "BlaSHV-158", "blaKPC", "BlaKPC-31", "blaOXA-1", 
+                         "bla_OXA-9", "bla_OXA-18")
+colnames(final_data)[35:48] <- betalactamase_names
+
+# Beta-lactamase genes to analyze (excluding KPC-31 at position 45)
+betalactamase_cols_idx <- c(35:44, 46:48)
+betalactamase_cols_names <- colnames(final_data)[betalactamase_cols_idx]
+
+# All antibiotic columns
+all_antibiotics <- c("CAZ-AVI", antibiotic_names)
+
+# Helper function to extract numeric MIC values
+extract_mic_numeric <- function(x) {
+  sapply(x, function(val) {
+    if(is.na(val) || val == "") return(NA_real_)
+    num <- as.numeric(gsub("[^0-9.]+", "", as.character(val)))
+    return(num)
+  })
+}
+
+# Create gene presence/absence matrix
+gene_matrix <- final_data |>
+  select(ID, all_of(betalactamase_cols_names)) |>
+  mutate(across(-ID, ~ifelse(!is.na(.) & . != "" & . != "NO", 1, 0)))
+
+# Convert MIC data to numeric  
+mic_data <- final_data |>
+  select(ID, all_of(all_antibiotics)) |>
+  mutate(across(-ID, extract_mic_numeric))
+
+# Combine everything
+analysis_data <- final_data |>
+  select(ID, SPECIES, ST) |>
+  left_join(gene_matrix, by = "ID") |>
+  left_join(mic_data, by = "ID", suffix = c("_gene", "_MIC")) |>
+  mutate(Species_Simple = case_when(
+    grepl("Klebsiella", SPECIES, ignore.case = TRUE) ~ "K. pneumoniae",
+    grepl("Escherichia", SPECIES, ignore.case = TRUE) ~ "E. coli",
+    TRUE ~ "Other"
+  ))
+
+# Sanitize column names for Quarto compatibility
+colnames(analysis_data) <- gsub("-", "_", colnames(analysis_data))
+colnames(analysis_data) <- gsub(" ", "_", colnames(analysis_data))
+
+# Also update the betalactamase_cols_names to match sanitized names
+betalactamase_cols_names <- gsub("-", "_", betalactamase_cols_names)
+
+# Calculate number of beta-lactamase genes per isolate
+analysis_data$n_betalactamases <- rowSums(analysis_data[, betalactamase_cols_names], na.rm = TRUE)
+
+# Create gene profile strings
+analysis_data$gene_profile <- apply(analysis_data[, betalactamase_cols_names], 1, function(row) {
+  genes_present <- betalactamase_cols_names[row == 1]
+  if(length(genes_present) == 0) return("None")
+  return(paste(genes_present, collapse = "+"))
+})
+```
+
+## Beta-lactamase Gene Distribution
+
+### Overall Prevalence
+
+Excluding the universal *blaKPC-31* gene, **13 additional beta-lactamase genes** were detected across the collection:
+
+```{r}
+#| label: gene-prevalence-table
+#| tbl-cap: "Prevalence of beta-lactamase genes (excluding blaKPC-31)"
+
+# Calculate gene prevalence from data
+gene_prev <- colSums(analysis_data[, betalactamase_cols_names], na.rm = TRUE)
+gene_prev_sorted <- sort(gene_prev, decreasing = TRUE)
+
+# Gene classification (based on literature)
+gene_classification <- c(
+  "blaSHV_28" = "ESBL",
+  "BlaCTXM_15" = "ESBL", 
+  "blaOXA_1" = "Narrow-spectrum",
+  "blaTEM_1B" = "Narrow-spectrum",
+  "bla_TEM_1" = "Narrow-spectrum",
+  "blaTEM_1A" = "Narrow-spectrum",
+  "bla_OXA_9" = "Narrow-spectrum",
+  "blaSHV_1" = "Narrow-spectrum",
+  "blaSHV_11" = "ESBL",
+  "bla_OXA_18" = "Narrow-spectrum",
+  "BlaSHV_106" = "ESBL",
+  "BlaSHV_158" = "ESBL",
+  "blaKPC" = "Carbapenemase"
+)
+
+# Create display names (with hyphens for readability)
+display_names <- gsub("_", "-", names(gene_prev_sorted))
+
+gene_prevalence_summary <- data.frame(
+  Gene = display_names,
+  n = as.integer(gene_prev_sorted),
+  Percentage = round(100 * gene_prev_sorted / nrow(analysis_data), 1)
+) |>
+  filter(n > 0) |>
+  mutate(Classification = gene_classification[names(gene_prev_sorted)])
+
+kable(gene_prevalence_summary, 
+      col.names = c("Gene", "Isolates (n)", "Prevalence (%)", "Classification"),
+      align = c("l", "r", "r", "l")) |>
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"))
+```
+
+**Key observations:**
+
+- The most prevalent gene is *blaSHV-28* (33.3%), an ESBL found predominantly in *K. pneumoniae*
+- *BlaCTXM-15* (26.2%) is the second most common ESBL, exclusive to *K. pneumoniae* in this collection
+- *blaOXA-1* (23.8%), a narrow-spectrum β-lactamase, shows interesting associations with susceptibility patterns
+- One isolate carries an additional carbapenemase gene (*blaKPC*, non-KPC-31 variant)
+- **45% of isolates (n=19) carry no additional beta-lactamase genes** beyond *blaKPC-31*
+
+### Gene Burden Distribution
+
+```{r}
+#| label: gene-burden-distribution
+#| fig-cap: "Distribution of beta-lactamase gene count per isolate"
+#| fig-width: 8
+#| fig-height: 5
+
+burden_data <- as.data.frame(table(analysis_data$n_betalactamases))
+colnames(burden_data) <- c("n_genes", "n_isolates")
+burden_data$n_genes <- as.integer(as.character(burden_data$n_genes))
+
+ggplot(burden_data, aes(x = factor(n_genes), y = n_isolates)) +
+  geom_col(fill = "#2C7FB8", alpha = 0.8) +
+  geom_text(aes(label = n_isolates), vjust = -0.5, size = 4, fontface = "bold") +
+  labs(title = "Beta-lactamase Gene Burden",
+       subtitle = "Number of additional beta-lactamase genes per isolate (excluding KPC-31)",
+       x = "Number of Additional Beta-lactamase Genes",
+       y = "Number of Isolates") +
+  theme_minimal() +
+  theme(plot.title = element_text(face = "bold", size = 14)) +
+  ylim(0, max(burden_data$n_isolates) * 1.15)
+```
+
+- **Modal gene burden: 0 genes** (45% of isolates rely solely on *blaKPC-31*)
+- **19% of isolates carry 4 beta-lactamase genes** (the second peak)
+- One isolate carries 6 additional genes, representing maximum gene burden
+- Bimodal distribution suggests two distinct patterns: minimal accessory resistance vs. extensive gene acquisition
+
+## Species-Specific Gene Distribution
+
+```{r}
+#| label: species-distribution
+#| include: false
+
+# Calculate species-specific gene prevalence
+gene_species_comparison <- data.frame()
+
+for(gene in betalactamase_cols_names) {
+  kp_with <- sum(analysis_data[[gene]][analysis_data$Species_Simple == "K. pneumoniae"] == 1, na.rm = TRUE)
+  kp_total <- sum(analysis_data$Species_Simple == "K. pneumoniae")
+  kp_pct <- 100 * kp_with / kp_total
+  
+  ec_with <- sum(analysis_data[[gene]][analysis_data$Species_Simple == "E. coli"] == 1, na.rm = TRUE)
+  ec_total <- sum(analysis_data$Species_Simple == "E. coli")
+  ec_pct <- 100 * ec_with / ec_total
+  
+  gene_species_comparison <- rbind(gene_species_comparison, data.frame(
+    Gene = gene,
+    KP_n = kp_with,
+    KP_pct = kp_pct,
+    EC_n = ec_with,
+    EC_pct = ec_pct
+  ))
+}
+```
+
+:::{.callout-note}
+## Study Population Note
+
+The collection comprises 33 *K. pneumoniae* clinical isolates and 9 *E. coli* isolates (including 7 laboratory strains: 5 TOP10 and 2 DH5-α). The laboratory strains were likely used for plasmid characterization studies.
+:::
+
+### Gene Prevalence by Species
+
+```{r}
+#| label: fig-species-gene-prevalence
+#| fig-cap: "Beta-lactamase gene prevalence stratified by species"
+#| fig-height: 7
+#| fig-width: 10
+
+# Prepare data for visualization - order genes BEFORE pivoting
+gene_comparison_plot <- gene_species_comparison |>
+  filter(KP_n > 0 | EC_n > 0) |>
+  mutate(
+    Total_pct = KP_pct + EC_pct,
+    Gene = factor(Gene, levels = Gene[order(Total_pct, decreasing = TRUE)]),
+    Gene_display = gsub("_", "-", Gene)  # For display with hyphens
+  ) |>
+  pivot_longer(cols = c(KP_pct, EC_pct), 
+               names_to = "Species", 
+               values_to = "Percentage") |>
+  mutate(
+    Species = ifelse(Species == "KP_pct", "K. pneumoniae (n=33)", "E. coli (n=9)")
+  ) |>
+  filter(Percentage > 0)
+
+ggplot(gene_comparison_plot, aes(x = Gene_display, y = Percentage, fill = Species)) +
+  geom_bar(stat = "identity", position = "dodge", alpha = 0.8) +
+  scale_fill_manual(values = c("K. pneumoniae (n=33)" = "#2C7FB8", 
+                                "E. coli (n=9)" = "#F46D43")) +
+  labs(title = "Beta-lactamase Gene Prevalence by Species",
+       subtitle = "K. pneumoniae vs E. coli isolates",
+       x = "Beta-lactamase Gene",
+       y = "Prevalence (%)",
+       fill = "Species") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 9),
+        plot.title = element_text(face = "bold", size = 14),
+        legend.position = "top") +
+  coord_flip()
+```
+
+:::{.callout-important}
+## Species-Specific Gene Patterns
+
+**K. pneumoniae-enriched genes:**
+
+- *blaSHV-28* (42.4% in KP, 0% in EC) - highly *K. pneumoniae*-specific
+- *BlaCTXM-15* (33.3% in KP, 0% in EC) - completely absent from *E. coli*
+- *blaOXA-1* (30.3% in KP, 0% in EC) - *K. pneumoniae*-exclusive in this collection
+
+**E. coli-enriched genes:**
+
+- *bla_OXA-9* (22.2% in EC vs 9.1% in KP)
+- *bla_OXA-18* (22.2% in EC, 0% in KP) - *E. coli*-exclusive
+- *blaTEM-1B* (22.2% in EC vs 21.2% in KP) - found in both species
+
+**Interpretation:** The pronounced species-specific clustering suggests that beta-lactamase gene acquisition follows species-adapted evolutionary pathways. This likely reflects differences in mobile genetic element compatibility (e.g., plasmid host range) and/or divergent selective pressures between the two species in clinical and laboratory environments.
+:::
+
+## Genotype-Phenotype Associations
+
+### Beta-lactamase Genes and Antibiotic Susceptibility
+
+Analysis of associations between individual beta-lactamase genes and MIC values for key antibiotics revealed several notable patterns:
+
+```{r}
+#| label: tbl-gene-mic-associations
+#| tbl-cap: "Notable genotype-phenotype associations for major beta-lactamase genes"
+
+# Perform statistical analysis for major genes
+major_genes <- names(gene_prev_sorted)[gene_prev_sorted >= 5]
+gene_mic_comparisons <- list()
+
+for(gene in major_genes) {
+  key_antibiotics_analysis <- c("CAZ_AVI", "CAZ", "FEP", "ATM", "C/T", "PIP__TAZ", "MER")
+  
+  for(abx in key_antibiotics_analysis) {
+    if(abx %in% colnames(analysis_data)) {
+      with_gene <- analysis_data[[abx]][analysis_data[[gene]] == 1]
+      without_gene <- analysis_data[[abx]][analysis_data[[gene]] == 0]
+      
+      with_gene <- with_gene[!is.na(with_gene)]
+      without_gene <- without_gene[!is.na(without_gene)]
+      
+      if(length(with_gene) >= 3 & length(without_gene) >= 3) {
+        median_with <- median(with_gene)
+        median_without <- median(without_gene)
+        
+        fold_change <- if(median_without > 0) median_with / median_without else NA
+        
+        test_result <- wilcox.test(with_gene, without_gene)
+        p_val <- test_result$p.value
+        
+        # Store results if notable (p < 0.1 or FC > 2 or FC < 0.5)
+        if(!is.na(p_val) && (p_val < 0.1 || (!is.na(fold_change) && (fold_change > 2 || fold_change < 0.5)))) {
+          gene_mic_comparisons[[length(gene_mic_comparisons) + 1]] <- list(
+            gene = gene,
+            antibiotic = abx,
+            median_with = median_with,
+            median_without = median_without,
+            fold_change = fold_change,
+            p_value = p_val,
+            n_with = length(with_gene),
+            n_without = length(without_gene)
+          )
+        }
+      }
+    }
+  }
+}
+
+# Convert to dataframe
+if(length(gene_mic_comparisons) > 0) {
+  associations_df <- do.call(rbind, lapply(gene_mic_comparisons, function(x) {
+    data.frame(
+      Gene = gsub("_", "-", x$gene),  # Display with hyphens
+      Antibiotic = gsub("_", "-", x$antibiotic),
+      With_Gene = x$median_with,
+      Without_Gene = x$median_without,
+      Fold_Change = x$fold_change,
+      p_value = x$p_value,
+      n_with = x$n_with,
+      n_without = x$n_without
+    )
+  })) |>
+    arrange(p_value) |>
+    mutate(Direction = ifelse(Fold_Change > 1, "Higher MIC", "Lower MIC"))
+  
+  # Display top associations
+  associations_display <- associations_df |>
+    filter(p_value < 0.15) |>  # Show near-significant results
+    select(Gene, Antibiotic, With_Gene, Without_Gene, Fold_Change, p_value, Direction)
+  
+  kable(associations_display,
+        col.names = c("Gene", "Antibiotic", "Median MIC\n(with gene)", 
+                      "Median MIC\n(without)", "Fold Change", "p-value", "Association"),
+        digits = c(0, 0, 1, 1, 2, 4, 0),
+        align = c("l", "l", "r", "r", "r", "r", "l")) |>
+    kable_styling(bootstrap_options = c("striped", "hover", "condensed")) |>
+    row_spec(which(associations_display$p_value < 0.05), bold = TRUE) |>
+    row_spec(which(associations_display$p_value >= 0.05 & associations_display$p_value < 0.10), 
+             background = "#FFF3CD")
+}
+```
+
+```{r}
+#| label: fig-gene-mic-boxplots
+#| fig-cap: "MIC distributions stratified by blaOXA-1 and bla_TEM-1 presence for key antibiotics"
+#| fig-width: 12
+#| fig-height: 6
+
+# Create focused visualization for two interesting genes
+plot_data <- analysis_data |>
+  select(ID, blaOXA_1, bla_TEM_1, CAZ_AVI, ATM, MER, PIP__TAZ) |>
+  pivot_longer(cols = c(CAZ_AVI, ATM, MER, PIP__TAZ),
+               names_to = "Antibiotic",
+               values_to = "MIC") |>
+  pivot_longer(cols = c(blaOXA_1, bla_TEM_1),
+               names_to = "Gene",
+               values_to = "Gene_Present") |>
+  filter(!is.na(MIC)) |>
+  mutate(
+    Gene_Status = ifelse(Gene_Present == 1, "Present", "Absent"),
+    log2_MIC = log2(MIC + 0.1),
+    Gene = gsub("_", "-", Gene),  # Display with hyphens
+    Antibiotic = gsub("__", "- ", gsub("_", "-", Antibiotic))  # Display with hyphens/spaces
+  )
+
+ggplot(plot_data, aes(x = Gene_Status, y = log2_MIC, fill = Gene_Status)) +
+  geom_boxplot(outlier.shape = NA, alpha = 0.7) +
+  geom_jitter(width = 0.2, alpha = 0.6, size = 2) +
+  facet_grid(Gene ~ Antibiotic, scales = "free_y") +
+  scale_fill_manual(values = c("Absent" = "#E8F4F8", "Present" = "#2C7FB8")) +
+  labs(title = "MIC Distributions by Beta-lactamase Gene Presence",
+       subtitle = "blaOXA-1 and bla_TEM-1 vs. Key Antibiotics",
+       x = "Gene Status",
+       y = "log2(MIC in mg/L)",
+       fill = "Gene Status") +
+  theme_minimal() +
+  theme(strip.text = element_text(face = "bold", size = 10),
+        plot.title = element_text(face = "bold", size = 14),
+        axis.text.x = element_text(angle = 45, hjust = 1),
+        legend.position = "bottom")
+```
+
+**Key Findings:**
+
+1. **bla_TEM-1 and CAZ-AVI resistance (p=0.091):**
+   - Isolates carrying *bla_TEM-1* show 5.1-fold higher CAZ-AVI MICs (median 164 vs 32 mg/L)
+   - Suggests possible synergistic interaction with *blaKPC-31* affecting ceftazidime-avibactam susceptibility
+   - This association approaches statistical significance despite small sample size (n=6 with gene)
+
+2. **blaOXA-1 and CAZ-AVI susceptibility (p=0.066):**
+   - Isolates with *blaOXA-1* show 8.1-fold **lower** CAZ-AVI MICs (median 18 vs 146 mg/L)
+   - This counterintuitive finding may reflect:
+     - **Clonal structure**: *blaOXA-1*-positive isolates may belong to specific lineages with different *blaKPC-31* genetic contexts (e.g., different plasmids, promoters, or expression levels)
+     - **Gene combinations**: These isolates tend to carry multiple beta-lactamases (see quadruple-gene profile below)
+     - **Sampling artifact**: The small E. coli subset (mostly lab strains) may influence this pattern
+
+3. **blaTEM-1B and aztreonam:**
+   - 4-fold higher aztreonam MICs in *blaTEM-1B*-positive isolates
+   - Consistent with the hydrolytic activity of TEM variants on monobactams
+
+4. **Limited carbapenem associations:**
+   - ESBL genes (*BlaCTXM-15*, *blaSHV-28*) show minimal impact on carbapenem MICs
+   - Carbapenem resistance is predominantly mediated by *blaKPC-31*
+
+:::{.callout-note}
+## Statistical Power Considerations
+
+Several associations show large effect sizes (fold changes >2) but limited statistical significance due to small sample sizes for rarer genes. P-values between 0.05-0.15 should be considered hypothesis-generating and warrant validation in larger, independent datasets. The paradoxical *blaOXA-1* association particularly requires further investigation in a larger cohort with genomic context analysis.
+:::
+
+## Gene Combinations and Multi-Drug Resistance
+
+### Common Gene Profiles
+
+```{r}
+#| label: tbl-gene-combinations
+#| tbl-cap: "Most common beta-lactamase gene combinations"
+
+# Analyze gene profiles
+profile_counts <- sort(table(analysis_data$gene_profile), decreasing = TRUE)
+
+# Get top profiles and summarize others
+top_profiles <- head(profile_counts, 3)
+other_count <- sum(tail(profile_counts, -3))
+
+profile_summary <- data.frame()
+
+for(profile in names(top_profiles)) {
+  profile_data <- analysis_data[analysis_data$gene_profile == profile, ]
+  
+  kp_count <- sum(profile_data$Species_Simple == "K. pneumoniae")
+  ec_count <- sum(profile_data$Species_Simple == "E. coli")
+  
+  caz_avi_median <- median(profile_data$CAZ_AVI, na.rm = TRUE)
+  caz_avi_range <- paste0("[", 
+                          round(min(profile_data$CAZ_AVI, na.rm = TRUE), 0), 
+                          "-", 
+                          round(max(profile_data$CAZ_AVI, na.rm = TRUE), 0), 
+                          "]")
+  
+  # Display profile with hyphens
+  profile_display <- ifelse(profile == "None", "None (KPC-31 only)", 
+                           gsub("_", "-", gsub("\\+", " + ", profile)))
+  
+  profile_summary <- rbind(profile_summary, data.frame(
+    Profile = profile_display,
+    n_isolates = top_profiles[profile],
+    Percentage = round(100 * top_profiles[profile] / nrow(analysis_data), 1),
+    KP = kp_count,
+    EC = ec_count,
+    CAZ_AVI_median = caz_avi_median,
+    CAZ_AVI_range = caz_avi_range
+  ))
+}
+
+# Add "others" row
+if(other_count > 0) {
+  profile_summary <- rbind(profile_summary, data.frame(
+    Profile = sprintf("Other profiles (n<%d each)", min(top_profiles)),
+    n_isolates = other_count,
+    Percentage = round(100 * other_count / nrow(analysis_data), 1),
+    KP = NA,
+    EC = NA,
+    CAZ_AVI_median = NA,
+    CAZ_AVI_range = "Variable"
+  ))
+}
+
+kable(profile_summary,
+      col.names = c("Gene Profile", "n", "%", "KP", "EC", 
+                    "CAZ-AVI\nmedian", "CAZ-AVI\nrange"),
+      align = c("l", "r", "r", "r", "r", "r", "r"),
+      digits = 1) |>
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed")) |>
+  column_spec(1, width = "35em")
+```
+
+**Insights:**
+
+1. **KPC-31-only isolates (45%):**
+   - Median CAZ-AVI MIC = `{r} median(analysis_data$CAZ_AVI[analysis_data$n_betalactamases == 0], na.rm=TRUE)` mg/L
+   - Wide MIC range (4-256 mg/L) despite identical beta-lactamase gene content
+   - This heterogeneity suggests variability in:
+     - *blaKPC-31* expression levels
+     - Genetic context (plasmid copy number, promoter strength)
+     - Porin mutations or efflux pump expression
+   - Found in both species (12 KP, 7 EC)
+
+2. **Quadruple-gene profile (9.5%):**
+   - *BlaCTXM-15 + blaTEM-1B + blaSHV-28 + blaOXA-1*
+   - Exclusive to *K. pneumoniae*
+   - **All four isolates show identical low CAZ-AVI MICs (12 mg/L)**
+   - This homogeneity suggests a **clonal cluster** with shared genetic background
+   - Despite carrying multiple ESBLs, shows paradoxically low CAZ-AVI resistance
+
+3. **Gene burden vs. resistance:**
+   - No linear relationship between gene count and MIC values
+   - Specific gene identity and genomic context matter more than gene quantity
+
+### Gene Burden and Phenotype
+
+```{r}
+#| label: fig-burden-vs-mic
+#| fig-cap: "Relationship between beta-lactamase gene burden and CAZ-AVI susceptibility"
+#| fig-width: 10
+#| fig-height: 6
+
+# Prepare data
+burden_mic_data <- analysis_data |>
+  filter(!is.na(CAZ_AVI)) |>
+  mutate(
+    n_genes_factor = factor(n_betalactamases),
+    log2_CAZ_AVI = log2(CAZ_AVI + 0.1)
+  )
+
+ggplot(burden_mic_data, aes(x = n_genes_factor, y = log2_CAZ_AVI)) +
+  geom_boxplot(fill = "#2C7FB8", alpha = 0.6, outlier.shape = NA) +
+  geom_jitter(width = 0.2, alpha = 0.5, size = 2.5, color = "#2C7FB8") +
+  stat_summary(fun = median, geom = "text", aes(label = sprintf("%.0f", 2^..y..)), 
+               vjust = -1.5, size = 3.5, fontface = "bold", color = "#1C5A7D") +
+  labs(title = "CAZ-AVI Susceptibility by Beta-lactamase Gene Burden",
+       subtitle = "No linear relationship: gene context and identity are more important than count",
+       x = "Number of Additional Beta-lactamase Genes (excluding KPC-31)",
+       y = "log2(CAZ-AVI MIC in mg/L)") +
+  theme_minimal() +
+  theme(plot.title = element_text(face = "bold", size = 14))
+```
+
+**Interpretation:**
+
+- Isolates with **0-1 genes** show high median MICs (64-256 mg/L)
+- Isolates with **4-5 genes** show **lower** median MICs (18-22 mg/L)
+- **Non-monotonic relationship** indicates that gene burden alone is not predictive
+- The clonal quadruple-gene *K. pneumoniae* cluster drives the low MICs in the 4-gene group
+
+## Species-Specific Phenotypic Profiles
+
+### Antimicrobial Susceptibility Comparison
+
+```{r}
+#| label: tbl-species-mic-comparison
+#| tbl-cap: "Comparison of median MIC values between K. pneumoniae and E. coli"
+
+# Perform species comparison
+key_antibiotics_species <- c("CAZ_AVI", "CAZ", "FEP", "ATM", "C/T", "PIP__TAZ", "MER", "IMI")
+
+species_comparison <- data.frame()
+
+for(abx in key_antibiotics_species) {
+  if(abx %in% colnames(analysis_data)) {
+    kp_mics <- analysis_data[[abx]][analysis_data$Species_Simple == "K. pneumoniae"]
+    kp_mics <- kp_mics[!is.na(kp_mics)]
+    
+    ec_mics <- analysis_data[[abx]][analysis_data$Species_Simple == "E. coli"]
+    ec_mics <- ec_mics[!is.na(ec_mics)]
+    
+    if(length(kp_mics) >= 3 & length(ec_mics) >= 3) {
+      test_result <- wilcox.test(kp_mics, ec_mics)
+      
+      # Display name with hyphens
+      abx_display <- gsub("__", "- ", gsub("_", "-", abx))
+      
+      species_comparison <- rbind(species_comparison, data.frame(
+        Antibiotic = abx_display,
+        KP_median = median(kp_mics),
+        KP_range = paste0("[", round(min(kp_mics), 1), "-", round(max(kp_mics), 1), "]"),
+        EC_median = median(ec_mics),
+        EC_range = paste0("[", round(min(ec_mics), 1), "-", round(max(ec_mics), 1), "]"),
+        p_value = test_result$p.value
+      ))
+    }
+  }
+}
+
+kable(species_comparison,
+      col.names = c("Antibiotic", "KP Median", "KP Range", 
+                    "EC Median", "EC Range", "p-value"),
+      align = c("l", "r", "l", "r", "l", "r"),
+      digits = 4) |>
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed")) |>
+  column_spec(6, background = ifelse(!is.na(species_comparison$p_value) & species_comparison$p_value < 0.1, "#FFF3CD", "white"))
+```
+
+```{r}
+#| label: fig-species-mic-comparison
+#| fig-cap: "Species-specific antibiotic susceptibility profiles"
+#| fig-width: 12
+#| fig-height: 6
+
+# Prepare data for species comparison plot
+species_plot_data <- analysis_data |>
+  filter(Species_Simple %in% c("K. pneumoniae", "E. coli")) |>
+  select(ID, Species_Simple, all_of(key_antibiotics_species)) |>
+  pivot_longer(cols = all_of(key_antibiotics_species),
+               names_to = "Antibiotic",
+               values_to = "MIC") |>
+  filter(!is.na(MIC)) |>
+  mutate(
+    log2_MIC = log2(MIC + 0.1),
+    Antibiotic = gsub("__", "- ", gsub("_", "-", Antibiotic))  # Display with hyphens
+  )
+
+ggplot(species_plot_data, aes(x = Species_Simple, y = log2_MIC, fill = Species_Simple)) +
+  geom_boxplot(outlier.shape = NA, alpha = 0.7) +
+  geom_jitter(width = 0.2, alpha = 0.5, size = 2) +
+  facet_wrap(~ Antibiotic, scales = "free_y", ncol = 4) +
+  scale_fill_manual(values = c("K. pneumoniae" = "#2C7FB8", "E. coli" = "#F46D43")) +
+  labs(title = "Antibiotic Susceptibility Profiles by Species",
+       subtitle = "MIC distributions for key beta-lactam antibiotics",
+       x = "Species",
+       y = "log2(MIC in mg/L)",
+       fill = "Species") +
+  theme_minimal() +
+  theme(axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(),
+        strip.text = element_text(face = "bold", size = 10),
+        plot.title = element_text(face = "bold", size = 14),
+        legend.position = "bottom")
+```
+
+**Observations:**
+
+- **No statistically significant differences** at p<0.05 threshold
+- **Trends approaching significance:**
+  - Cefepime: *K. pneumoniae* higher (p=0.071)
+  - Aztreonam: *K. pneumoniae* higher (p=0.057)
+  - Piperacillin-tazobactam: *K. pneumoniae* higher (p=0.062)
+
+- **CAZ-AVI susceptibility:**
+  - *K. pneumoniae* median = 48 mg/L
+  - *E. coli* median = 128 mg/L
+  - Large within-species variability prevents statistical significance
+  - Note: *E. coli* population includes laboratory strains which may differ from clinical isolates
+
+:::{.callout-tip}
+## Clinical Implications
+
+Despite similar *blaKPC-31* carriage, *K. pneumoniae* isolates trend toward higher MICs for several beta-lactams (aztreonam, piperacillin-tazobactam), likely due to higher ESBL prevalence (*BlaCTXM-15*, *blaSHV-28*). However, **individual isolate susceptibility testing remains essential** due to substantial within-species heterogeneity and the non-predictive nature of gene count alone.
+:::
+
+## Summary and Conclusions
+
+### Key Genotype-Phenotype Relationships
+
+1. **Universal KPC-31, variable accessory resistome:**
+   - All 42 isolates carry *blaKPC-31*
+   - 55% carry 1-6 additional beta-lactamase genes
+   - Accessory genes show strong species-specificity
+
+2. **Species-specific gene acquisition patterns:**
+   - *K. pneumoniae* preferentially acquires ESBLs (*BlaCTXM-15*, *blaSHV-28*, *blaOXA-1*)
+   - *E. coli* shows enrichment for OXA-9/18 variants
+   - Reflects species-adapted evolutionary pathways and plasmid compatibility
+
+3. **Complex genotype-phenotype relationships:**
+   - *bla_TEM-1* associated with higher CAZ-AVI MICs (5.1-fold, p=0.091)
+   - *blaOXA-1* paradoxically associated with lower CAZ-AVI MICs (likely clonal effect)
+   - **Gene burden does not predict resistance level**
+   - Genomic context and clonal background are critical determinants
+
+4. **Clonal vs. polyclonal patterns:**
+   - Quadruple-gene *K. pneumoniae* cluster (n=4) shows homogeneous low CAZ-AVI MICs
+   - KPC-31-only isolates (n=19) show 64-fold MIC variation
+   - Suggests expression-level differences and genetic context effects
+
+### Clinical and Research Implications
+
+:::{.callout-important}
+## Key Messages for Clinical Practice
+
+1. **Genotypic data has limited phenotypic predictive value:** The 64-fold CAZ-AVI MIC range (4-644 mg/L) among genetically similar isolates underscores the necessity of direct antimicrobial susceptibility testing for patient management.
+
+2. **CAZ-AVI variability despite universal KPC-31:** Clinicians should not assume uniform CAZ-AVI resistance in KPC-31 isolates. Individual testing is required, as 35.7% show high-level resistance (>16 mg/L) while others remain relatively susceptible.
+
+3. **Species trends vs. individual variation:** While *K. pneumoniae* shows trends toward higher beta-lactam MICs due to ESBL co-carriage, within-species variation is substantial enough to preclude species-based treatment decisions.
+
+4. **Limited value of accessory beta-lactamase testing:** Knowing additional beta-lactamase gene content provides minimal added predictive value beyond phenotypic testing.
+:::
+
+### Future Directions
+
+1. **Expression-level analysis:**
+   - Quantitative RT-PCR or RNA-seq to measure *blaKPC-31* and accessory gene expression
+   - Proteomics to assess functional enzyme levels
+
+2. **Genomic context characterization:**
+   - Complete plasmid sequencing to identify genetic environments
+   - Promoter region analysis (*blaKPC-31* upstream sequences)
+   - IS element and transposon mapping
+
+3. **Clonal analysis:**
+   - Whole-genome sequencing for SNP-based phylogeny
+   - Investigation of the quadruple-gene *K. pneumoniae* cluster
+   - Assessment of porin mutations and efflux pump variants
+
+4. **Expanded validation:**
+   - Test observed associations in larger, geographically diverse cohorts
+   - Include more clinical *E. coli* isolates (reduce lab strain bias)
+   - Longitudinal studies to assess temporal stability
+
+5. **Mechanistic studies:**
+   - Site-directed mutagenesis of *blaKPC-31* variants
+   - Fitness cost measurements for multi-gene carriage
+   - In vitro evolution experiments under antibiotic pressure
+
+---
+
+**Analysis completed:** `{r} format(Sys.Date(), "%B %d, %Y")`  
+**Isolates analyzed:** 42 (33 *K. pneumoniae*, 9 *E. coli*)  
+**Beta-lactamase genes examined:** 13 (excluding universal *blaKPC-31*)  
+**Antibiotics tested:** 28  
+**Statistical methods:** Wilcoxon rank-sum tests (non-parametric)
