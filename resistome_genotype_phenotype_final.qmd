@@ -655,6 +655,368 @@ ggplot(species_plot_data, aes(x = Species_Simple, y = log2_MIC, fill = Species_S
 Despite similar *blaKPC-31* carriage, *K. pneumoniae* isolates trend toward higher MICs for several beta-lactams (aztreonam, piperacillin-tazobactam), likely due to higher ESBL prevalence (*BlaCTXM-15*, *blaSHV-28*). However, **individual isolate susceptibility testing remains essential** due to substantial within-species heterogeneity and the non-predictive nature of gene count alone.
 :::
 
+
+## KPC-31 Meropenem Susceptibility: Correlation with Beta-lactamase Genes
+
+### Background and Rationale
+
+A key characteristic of KPC-31-producing isolates is **variable carbapenem susceptibility** despite universal carriage of the carbapenemase gene. Many KPC-31 isolates show "reversion" to meropenem susceptibility, suggesting that factors beyond *blaKPC-31* presence modulate carbapenem resistance. This section investigates whether **additional beta-lactamase genes** correlate with meropenem resistance status.
+
+### Meropenem Susceptibility Classification
+
+```{r}
+#| label: mer-classification
+#| include: false
+
+# Classify isolates by meropenem susceptibility (≤2 mg/L = susceptible)
+analysis_data <- analysis_data |>
+  mutate(
+    MER_Category = case_when(
+      MER <= 2 ~ "Susceptible",
+      MER >= 8 ~ "Resistant",
+      TRUE ~ "Intermediate"
+    ),
+    MER_Binary = ifelse(MER <= 2, "MER-Susceptible", "MER-Resistant")
+  )
+
+# Calculate gene comparison by MER status
+gene_mer_comparison <- data.frame()
+
+for(gene in betalactamase_cols_names) {
+  mer_susc_with <- sum(analysis_data[[gene]][analysis_data$MER_Binary == "MER-Susceptible"] == 1, na.rm = TRUE)
+  mer_susc_total <- sum(analysis_data$MER_Binary == "MER-Susceptible", na.rm = TRUE)
+  mer_susc_pct <- 100 * mer_susc_with / mer_susc_total
+  
+  mer_res_with <- sum(analysis_data[[gene]][analysis_data$MER_Binary == "MER-Resistant"] == 1, na.rm = TRUE)
+  mer_res_total <- sum(analysis_data$MER_Binary == "MER-Resistant", na.rm = TRUE)
+  mer_res_pct <- 100 * mer_res_with / mer_res_total
+  
+  if(mer_susc_with > 0 || mer_res_with > 0) {
+    cont_table <- matrix(c(mer_susc_with, mer_susc_total - mer_susc_with,
+                          mer_res_with, mer_res_total - mer_res_with),
+                        nrow = 2, byrow = TRUE)
+    
+    fisher_result <- fisher.test(cont_table)
+    
+    gene_mer_comparison <- rbind(gene_mer_comparison, data.frame(
+      Gene = gene,
+      MER_Susc_n = mer_susc_with,
+      MER_Susc_pct = mer_susc_pct,
+      MER_Res_n = mer_res_with,
+      MER_Res_pct = mer_res_pct,
+      Odds_Ratio = fisher_result$estimate,
+      p_value = fisher_result$p.value,
+      stringsAsFactors = FALSE
+    ))
+  }
+}
+
+gene_mer_comparison <- gene_mer_comparison |>
+  mutate(
+    Gene_display = gsub("_", "-", Gene),
+    Enriched_In = case_when(
+      MER_Res_pct > MER_Susc_pct * 1.5 ~ "MER-Resistant",
+      MER_Susc_pct > MER_Res_pct * 1.5 ~ "MER-Susceptible",
+      TRUE ~ "Similar"
+    )
+  ) |>
+  arrange(p_value)
+```
+
+Using the EUCAST/CLSI susceptibility breakpoint of **≤2 mg/L for meropenem**, isolates were classified into two groups:
+
+```{r}
+#| label: tbl-mer-distribution
+#| tbl-cap: "Distribution of meropenem susceptibility among KPC-31 isolates"
+
+mer_summary_table <- data.frame(
+  Category = c("MER-Susceptible (≤2 mg/L)", "MER-Resistant (>2 mg/L)", "Missing data"),
+  n_isolates = c(
+    sum(analysis_data$MER_Binary == "MER-Susceptible", na.rm = TRUE),
+    sum(analysis_data$MER_Binary == "MER-Resistant", na.rm = TRUE),
+    sum(is.na(analysis_data$MER))
+  ),
+  Percentage = c(
+    round(100 * sum(analysis_data$MER_Binary == "MER-Susceptible", na.rm = TRUE) / 42, 1),
+    round(100 * sum(analysis_data$MER_Binary == "MER-Resistant", na.rm = TRUE) / 42, 1),
+    round(100 * sum(is.na(analysis_data$MER)) / 42, 1)
+  ),
+  MIC_Range = c("0.12 - 2.0", "4.0 - 16.0", "—"),
+  Median_MIC = c("0.1", "12.0", "—")
+)
+
+kable(mer_summary_table,
+      col.names = c("Category", "n", "%", "MIC Range (mg/L)", "Median (mg/L)"),
+      align = c("l", "r", "r", "r", "r")) |>
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"))
+```
+
+:::{.callout-important}
+## KPC-31 "Reversion" to Meropenem Susceptibility
+
+**57% of KPC-31 isolates (20/35 with MIC data) show meropenem susceptibility** (≤2 mg/L), demonstrating the characteristic variability in carbapenem activity associated with this KPC variant. This "reversion" phenomenon is well-documented for KPC-31 but its molecular basis remains incompletely understood.
+:::
+
+### Beta-lactamase Gene Distribution by Meropenem Status
+
+```{r}
+#| label: fig-mer-gene-prevalence
+#| fig-cap: "Beta-lactamase gene prevalence stratified by meropenem susceptibility status"
+#| fig-width: 10
+#| fig-height: 7
+
+# Prepare data for visualization
+gene_mer_plot_data <- gene_mer_comparison |>
+  select(Gene_display, MER_Susc_pct, MER_Res_pct) |>
+  pivot_longer(cols = c(MER_Susc_pct, MER_Res_pct),
+               names_to = "Group",
+               values_to = "Percentage") |>
+  mutate(
+    Group = ifelse(Group == "MER_Susc_pct", 
+                  "MER-Susceptible (≤2 mg/L, n=20)",
+                  "MER-Resistant (>2 mg/L, n=15)"),
+    Gene_display = factor(Gene_display, 
+                         levels = gene_mer_comparison$Gene_display[order(gene_mer_comparison$MER_Res_pct, decreasing = TRUE)])
+  )
+
+ggplot(gene_mer_plot_data, aes(x = Gene_display, y = Percentage, fill = Group)) +
+  geom_bar(stat = "identity", position = "dodge", alpha = 0.8) +
+  scale_fill_manual(values = c("MER-Susceptible (≤2 mg/L, n=20)" = "#66C2A5",
+                                "MER-Resistant (>2 mg/L, n=15)" = "#FC8D62")) +
+  labs(
+    title = "Beta-lactamase Gene Prevalence by Meropenem Susceptibility",
+    subtitle = "KPC-31-positive isolates stratified by meropenem MIC",
+    x = "Beta-lactamase Gene",
+    y = "Prevalence (%)",
+    fill = "Meropenem\nSusceptibility"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1, size = 10),
+    plot.title = element_text(face = "bold", size = 13),
+    plot.subtitle = element_text(size = 10),
+    legend.position = "top"
+  ) +
+  coord_flip()
+```
+
+```{r}
+#| label: tbl-mer-gene-comparison
+#| tbl-cap: "Statistical comparison of beta-lactamase gene prevalence by meropenem status"
+
+gene_mer_display <- gene_mer_comparison |>
+  mutate(
+    MER_Susc = sprintf("%d (%.0f%%)", MER_Susc_n, MER_Susc_pct),
+    MER_Res = sprintf("%d (%.0f%%)", MER_Res_n, MER_Res_pct),
+    OR_display = sprintf("%.2f", Odds_Ratio),
+    Significance = ifelse(p_value < 0.05, "*", ifelse(p_value < 0.10, "†", ""))
+  ) |>
+  select(Gene_display, MER_Susc, MER_Res, Enriched_In, OR_display, p_value, Significance) |>
+  arrange(p_value)
+
+kable(gene_mer_display,
+      col.names = c("Gene", "MER-Susceptible\n(n=20)", "MER-Resistant\n(n=15)", 
+                    "Enriched In", "Odds\nRatio", "p-value", "Sig"),
+      digits = 4,
+      align = c("l", "r", "r", "l", "r", "r", "c")) |>
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"), font_size = 11)
+```
+
+**Observations:**
+
+- **No genes show statistically significant enrichment** in either group (all p ≥ 0.15)
+- *bla-OXA-18* and *blaKPC* present only in MER-resistant isolates (small numbers: 2 and 1 isolates, respectively)
+- Major ESBLs (*BlaCTXM-15*, *blaSHV-28*, *blaOXA-1*, *blaTEM-1B*) show **similar prevalence** in both groups (~25-27%)
+- Slight trend for *blaTEM-1A* in MER-resistant (20% vs 10%), but not significant
+
+### Gene Burden Analysis
+
+```{r}
+#| label: tbl-mer-gene-burden
+#| tbl-cap: "Beta-lactamase gene burden by meropenem susceptibility status"
+
+mer_susc_burden <- analysis_data$n_betalactamases[analysis_data$MER_Binary == "MER-Susceptible" & !is.na(analysis_data$MER_Binary)]
+mer_res_burden <- analysis_data$n_betalactamases[analysis_data$MER_Binary == "MER-Resistant" & !is.na(analysis_data$MER_Binary)]
+
+burden_test <- wilcox.test(mer_susc_burden, mer_res_burden)
+
+burden_summary <- data.frame(
+  Group = c("MER-Susceptible", "MER-Resistant"),
+  n = c(length(mer_susc_burden), length(mer_res_burden)),
+  Mean = c(mean(mer_susc_burden, na.rm=TRUE), mean(mer_res_burden, na.rm=TRUE)),
+  SD = c(sd(mer_susc_burden, na.rm=TRUE), sd(mer_res_burden, na.rm=TRUE)),
+  Median = c(median(mer_susc_burden, na.rm=TRUE), median(mer_res_burden, na.rm=TRUE)),
+  Range = c(
+    sprintf("%d-%d", min(mer_susc_burden, na.rm=TRUE), max(mer_susc_burden, na.rm=TRUE)),
+    sprintf("%d-%d", min(mer_res_burden, na.rm=TRUE), max(mer_res_burden, na.rm=TRUE))
+  )
+)
+
+kable(burden_summary,
+      col.names = c("Group", "n", "Mean", "SD", "Median", "Range"),
+      digits = 1,
+      align = c("l", "r", "r", "r", "r", "l")) |>
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed")) |>
+  add_footnote(sprintf("Wilcoxon rank-sum test: p = %.4f (not significant)", burden_test$p.value),
+               notation = "none")
+```
+
+```{r}
+#| label: fig-mer-gene-burden
+#| fig-cap: "Distribution of beta-lactamase gene burden by meropenem susceptibility"
+#| fig-width: 8
+#| fig-height: 5
+
+burden_plot_data <- analysis_data |>
+  filter(!is.na(MER_Binary)) |>
+  count(n_betalactamases, MER_Binary)
+
+ggplot(burden_plot_data, aes(x = factor(n_betalactamases), y = n, fill = MER_Binary)) +
+  geom_col(position = "dodge", alpha = 0.8) +
+  geom_text(aes(label = n), position = position_dodge(width = 0.9), 
+            vjust = -0.3, size = 3.5) +
+  scale_fill_manual(values = c("MER-Susceptible" = "#66C2A5",
+                                "MER-Resistant" = "#FC8D62"),
+                    labels = c("MER-Susceptible (≤2 mg/L)", "MER-Resistant (>2 mg/L)")) +
+  labs(
+    title = "Beta-lactamase Gene Burden by Meropenem Susceptibility",
+    subtitle = "No significant difference in gene count between groups (p = 0.80)",
+    x = "Number of Additional Beta-lactamase Genes (excluding KPC-31)",
+    y = "Number of Isolates",
+    fill = "Meropenem Status"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(face = "bold", size = 13),
+    legend.position = "top"
+  )
+```
+
+:::{.callout-note}
+## Gene Burden Finding
+
+Both MER-susceptible and MER-resistant groups show **median gene burden of 0** (no additional beta-lactamases beyond KPC-31). Mean values are also similar (1.4 vs 1.7 genes, p=0.80), indicating that meropenem resistance status is **not associated with higher beta-lactamase gene burden**.
+:::
+
+### Cross-Correlation with Other Beta-lactams
+
+```{r}
+#| label: tbl-mer-other-betalactams
+#| tbl-cap: "MIC values for other beta-lactams stratified by meropenem status"
+
+key_betalactams <- c("CAZ-AVI", "FEP", "ATM", "IMI", "ERT")
+other_betalactam_summary <- data.frame()
+
+for(abx in key_betalactams) {
+  if(abx %in% colnames(analysis_data)) {
+    mer_s <- analysis_data[[abx]][analysis_data$MER_Binary == "MER-Susceptible"]
+    mer_r <- analysis_data[[abx]][analysis_data$MER_Binary == "MER-Resistant"]
+    
+    mer_s <- mer_s[!is.na(mer_s)]
+    mer_r <- mer_r[!is.na(mer_r)]
+    
+    if(length(mer_s) > 0 & length(mer_r) > 0) {
+      test <- wilcox.test(mer_s, mer_r)
+      fc <- median(mer_r) / median(mer_s)
+      
+      other_betalactam_summary <- rbind(other_betalactam_summary, data.frame(
+        Antibiotic = gsub("__", "- ", gsub("_", "-", abx)),
+        MER_S_median = median(mer_s),
+        MER_S_range = sprintf("[%.1f-%.1f]", min(mer_s), max(mer_s)),
+        MER_R_median = median(mer_r),
+        MER_R_range = sprintf("[%.1f-%.1f]", min(mer_r), max(mer_r)),
+        Fold_Change = fc,
+        p_value = test$p.value
+      ))
+    }
+  }
+}
+
+kable(other_betalactam_summary,
+      col.names = c("Antibiotic", "MER-S\nMedian", "Range", "MER-R\nMedian", 
+                    "Range", "Fold\nChange", "p-value"),
+      digits = c(0, 1, 0, 1, 0, 2, 4),
+      align = c("l", "r", "l", "r", "l", "r", "r")) |>
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"))
+```
+
+**Observations:**
+
+- Trends toward higher MICs in MER-resistant isolates for several agents (CAZ-AVI: 2.7×, ATM: 4.0×, ERT: 8.0×)
+- None reach statistical significance (limited power with small sample sizes)
+- Suggests possible co-variation in carbapenem susceptibility, but not driven by accessory beta-lactamase genes
+
+### Main Findings and Interpretation
+
+:::{.callout-important}
+## Key Conclusion: Accessory Genes Do NOT Explain Meropenem Susceptibility
+
+The analysis reveals **NO association** between beta-lactamase gene content and meropenem susceptibility status in KPC-31 isolates:
+
+1. **Gene prevalence:** Similar distribution of ESBLs and other beta-lactamases in MER-susceptible vs MER-resistant groups
+2. **Gene burden:** No difference in total gene count (median 0 in both, p=0.80)
+3. **Statistical testing:** No genes show significant enrichment in either group (all p≥0.15)
+
+**This strongly suggests that the KPC-31 "reversion" to meropenem susceptibility is driven by factors OTHER than accessory beta-lactamase gene content.**
+:::
+
+### Likely Mechanisms of Variable Meropenem Susceptibility
+
+Since accessory beta-lactamase genes do not explain the variability, the meropenem susceptibility likely results from:
+
+1. **Variable KPC-31 expression levels**
+   - Transcriptional regulation differences
+   - Plasmid copy number variation
+   - Promoter strength variations
+
+2. **Porin deficiency status**
+   - *ompK35* and *ompK36* mutations
+   - Differential porin expression
+   - Loss vs. partial function
+
+3. **Genetic context of *blaKPC-31***
+   - Plasmid type and stability
+   - Position relative to mobile elements
+   - Upstream regulatory sequences
+
+4. **Efflux pump activity**
+   - AcrAB-TolC expression
+   - Other multidrug efflux systems
+
+5. **Clonal background effects**
+   - ST-specific characteristics
+   - Background mutations affecting fitness
+
+### Clinical Implications
+
+:::{.callout-tip}
+## Implications for Clinical Practice and Research
+
+**For Clinicians:**
+- **Individual susceptibility testing is essential** for KPC-31 isolates
+- Genotypic detection of *blaKPC-31* alone cannot predict carbapenem phenotype
+- ~60% of KPC-31 isolates may remain carbapenem-susceptible
+- Gene presence/absence data provides limited phenotypic prediction value
+
+**For Researchers:**
+- Future studies should focus on **KPC-31 expression levels** and **porin status**
+- Whole-genome sequencing with transcriptomics needed to understand mechanism
+- Plasmid characterization and copy number quantification recommended
+- Clonal background may be more important than accessory gene content
+:::
+
+### Recommendations for Future Investigation
+
+To elucidate the mechanisms of variable meropenem susceptibility in KPC-31 isolates:
+
+1. **Quantitative RT-PCR**: Measure *blaKPC-31* mRNA expression levels
+2. **Whole-genome sequencing**: Assess *ompK35*/*ompK36* porin gene status
+3. **Plasmid analysis**: Determine copy number and genetic environment
+4. **Promoter sequencing**: Analyze *blaKPC-31* upstream regulatory regions
+5. **Clonal structure analysis**: Correlate MLST/cgMLST with phenotype
+6. **Protein expression studies**: Quantify KPC-31 enzyme levels
+
+
 ## Summary and Conclusions
 
 ### Key Genotype-Phenotype Relationships

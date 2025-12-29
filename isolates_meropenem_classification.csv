@@ -1,0 +1,43 @@
+"ID","SPECIES","Species_Simple","MER","MER_Binary","MER_Category","n_betalactamases","BlaCTXM-15","bla_TEM-1","blaTEM-1A","blaTEM-1B","blaSHV-1","blaSHV-11","blaSHV-28","BlaSHV-106","BlaSHV-158","blaKPC","blaOXA-1","bla_OXA-9","bla_OXA-18"
+"KpE2-19","Klebsiella pneumoniae","K. pneumoniae",0.12,"MER-Susceptible","Susceptible",6,1,1,0,1,0,0,1,0,0,0,1,1,0
+"Pkpc-31-TOP10-E.coli","Escherichia coli TOP10","E. coli",0.12,"MER-Susceptible","Susceptible",0,0,0,0,0,0,0,0,0,0,0,0,0,0
+"P14","Klebsiella pneumoniae","K. pneumoniae",0.12,"MER-Susceptible","Susceptible",0,0,0,0,0,0,0,0,0,0,0,0,0,0
+"P17","Klebsiella pneumoniae","K. pneumoniae",0.12,"MER-Susceptible","Susceptible",5,1,0,0,1,0,0,1,0,0,0,1,1,0
+"P23","Klebsiella pneumoniae","K. pneumoniae",0.12,"MER-Susceptible","Susceptible",4,1,0,0,1,0,0,1,0,0,0,1,0,0
+"P26","Klebsiella pneumoniae","K. pneumoniae",0.12,"MER-Susceptible","Susceptible",0,0,0,0,0,0,0,0,0,0,0,0,0,0
+"P30","Klebsiella pneumoniae","K. pneumoniae",0.12,"MER-Susceptible","Susceptible",0,0,0,0,0,0,0,0,0,0,0,0,0,0
+"KPC-31 cloned into Pcr-Blunt II TOPO-NeoR Vector","Escherichia coli TOP10","E. coli",0.12,"MER-Susceptible","Susceptible",0,0,0,0,0,0,0,0,0,0,0,0,0,0
+"27B","Klebsiella pneumoniae","K. pneumoniae",0.12,"MER-Susceptible","Susceptible",4,1,0,0,1,0,0,1,0,0,0,1,0,0
+"21","Klebsiella pneumoniae","K. pneumoniae",0.12,"MER-Susceptible","Susceptible",4,1,0,0,1,0,0,1,0,0,0,1,0,0
+"0323-11-TR (KPC-31)","Escherichia coli DH5-α","E. coli",0.12,"MER-Susceptible","Susceptible",0,0,0,0,0,0,0,0,0,0,0,0,0,0
+"EC-M7b","Escherichia coli TOP10","E. coli",0.125,"MER-Susceptible","Susceptible",0,0,0,0,0,0,0,0,0,0,0,0,0,0
+"23-TOPO","Escherichia coli TOP10","E. coli",0.25,"MER-Susceptible","Susceptible",0,0,0,0,0,0,0,0,0,0,0,0,0,0
+"P22","Klebsiella pneumoniae","K. pneumoniae",1,"MER-Susceptible","Susceptible",0,0,0,0,0,0,0,0,0,0,0,0,0,0
+"P28","Klebsiella pneumoniae","K. pneumoniae",1,"MER-Susceptible","Susceptible",0,0,0,0,0,0,0,0,0,0,0,0,0,0
+"Kp293","Klebsiella pneumoniae","K. pneumoniae",2,"MER-Susceptible","Susceptible",0,0,0,0,0,0,0,0,0,0,0,0,0,0
+"P9","Klebsiella pneumoniae","K. pneumoniae",2,"MER-Susceptible","Susceptible",3,0,0,1,0,0,0,0,0,1,0,0,1,0
+"KP -1186 (W)","Klebsiella pneumoniae","K. pneumoniae",2,"MER-Susceptible","Susceptible",1,0,0,1,0,0,0,0,0,0,0,0,0,0
+"PZ2  RM2.10.T0","Klebsiella pneumoniae","K. pneumoniae",2,"MER-Susceptible","Susceptible",1,0,0,0,0,1,0,0,0,0,0,0,0,0
+"PZ3  RM2.15.T0","Klebsiella pneumoniae","K. pneumoniae",2,"MER-Susceptible","Susceptible",1,0,0,0,0,0,1,0,0,0,0,0,0,0
+"N3133201 (KP)","Klebsiella pneumoniae","K. pneumoniae",4,"MER-Resistant","Intermediate",0,0,0,0,0,0,0,0,0,0,0,0,0,0
+"P35","Klebsiella pneumoniae","K. pneumoniae",4,"MER-Resistant","Intermediate",0,0,0,0,0,0,0,0,0,0,0,0,0,0
+"KP- 1186 (T)","Klebsiella pneumoniae","K. pneumoniae",4,"MER-Resistant","Intermediate",1,0,0,1,0,0,0,0,0,0,0,0,0,0
+"0323-37-TR (KPC3-31)","Escherichia coli DH5-α","E. coli",4,"MER-Resistant","Intermediate",0,0,0,0,0,0,0,0,0,0,0,0,0,0
+"KP-M7b","Klebsiella pneumoniae","K. pneumoniae",6.4,"MER-Resistant","Intermediate",0,0,0,0,0,0,0,0,0,0,0,0,0,0
+"Kp292","Klebsiella pneumoniae","K. pneumoniae",8,"MER-Resistant","Resistant",4,1,0,0,1,0,1,0,0,0,0,1,0,0
+"1001-2021","Klebsiella pneumoniae","K. pneumoniae",8,"MER-Resistant","Resistant",4,1,0,1,0,0,0,1,0,0,0,1,0,0
+"EC-R3","Escherichia coli","E. coli",12,"MER-Resistant","Resistant",4,0,1,0,1,0,0,0,0,0,0,0,1,1
+"EC-R4","Escherichia coli","E. coli",12,"MER-Resistant","Resistant",4,0,1,0,1,0,0,0,0,0,0,0,1,1
+"KP-R1","Klebsiella pneumoniae","K. pneumoniae",12,"MER-Resistant","Resistant",0,0,0,0,0,0,0,0,0,0,0,0,0,0
+"KP-R2","Klebsiella pneumoniae","K. pneumoniae",12,"MER-Resistant","Resistant",0,0,0,0,0,0,0,0,0,0,0,0,0,0
+"E. coli KPC-31-TOP10- ","Escherichia coli TOP10","E. coli",12,"MER-Resistant","Resistant",0,0,0,0,0,0,0,0,0,0,0,0,0,0
+"0213-2021","Klebsiella pneumoniae","K. pneumoniae",12,"MER-Resistant","Resistant",4,1,0,0,1,0,0,1,0,0,0,1,0,0
+"P21","Klebsiella pneumoniae","K. pneumoniae",16,"MER-Resistant","Resistant",0,0,0,0,0,0,0,0,0,0,0,0,0,0
+"0323-2021","Klebsiella pneumoniae","K. pneumoniae",16,"MER-Resistant","Resistant",5,1,0,1,0,0,0,1,0,0,1,1,0,0
+"PZ 4 (CAZ120)","Klebsiella pneumoniae","K. pneumoniae",NA,NA,"Intermediate",1,0,0,0,0,1,0,0,0,0,0,0,0,0
+"PZ 6 (CAZ 30)","Klebsiella pneumoniae","K. pneumoniae",NA,NA,"Intermediate",1,0,0,0,0,0,0,1,0,0,0,0,0,0
+"PZ 3 (CAZ 85)","Klebsiella pneumoniae","K. pneumoniae",NA,NA,"Intermediate",3,1,1,0,0,0,0,1,0,0,0,0,0,0
+"PZ 3 (CAZ 108)","Klebsiella pneumoniae","K. pneumoniae",NA,NA,"Intermediate",3,1,1,0,0,0,0,1,0,0,0,0,0,0
+"PZ 4 (CAZ147)","Klebsiella pneumoniae","K. pneumoniae",NA,NA,"Intermediate",2,0,0,0,0,0,0,1,1,0,0,0,0,0
+"PZ 5 (CAZ107)","Klebsiella pneumoniae","K. pneumoniae",NA,NA,"Intermediate",3,0,1,0,0,0,0,1,0,0,0,1,0,0
+"PZ 6 (CAZ 31)","Klebsiella pneumoniae","K. pneumoniae",NA,NA,"Intermediate",1,0,0,0,0,0,0,1,0,0,0,0,0,0
