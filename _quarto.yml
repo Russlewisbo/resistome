@@ -10,7 +10,7 @@ website:
         file: index.qmd
       - text: "Full Report"
         file: resistome_genotype_phenotype_final.qmd 
-      - text: "Beta-latamase analysis"
+      - text: "Beta-lactamase analysis"
         file: resistome_analysis_report.qmd
       - text: "About"
         file: about.qmd
