@@ -8,7 +8,7 @@
 /.quarto/
 _site/
 *_cache/
-*_files/
+
 
 # Data files (keep your Excel file private if needed)
 # Uncomment the line below if you want to keep the data private
