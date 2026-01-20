@@ -1134,6 +1134,7 @@ Since accessory beta-lactamase genes do not explain the variability, the meropen
 - Genotypic detection of *blaKPC-31* alone cannot predict carbapenem phenotype
 - ~60% of KPC-31 isolates may remain carbapenem-susceptible
 - Gene presence/absence data provides limited phenotypic prediction value
+- **TEM gene presence may serve as a marker** (not cause) for reduced meropenem susceptibility, warranting careful testing
 
 **For Researchers:**
 - Future studies should focus on **KPC-31 expression levels** and **porin status**
