@@ -946,6 +946,143 @@ kable(other_betalactam_summary,
 - None reach statistical significance (limited power with small sample sizes)
 - Suggests possible co-variation in carbapenem susceptibility, but not driven by accessory beta-lactamase genes
 
+### TEM Beta-Lactamase Genes and Meropenem Susceptibility
+
+While individual TEM variants showed no significant association with meropenem MICs, combining all TEM genes (blaTEM-1, blaTEM-1A, blaTEM-1B) into a single group reveals an interesting pattern.
+
+```{r}
+#| label: tem-mer-analysis
+#| include: false
+
+# Create combined TEM indicator (ANY TEM gene present)
+tem_cols_all <- c("bla TEM_1", "blaTEM_1A", "blaTEM_1B")
+tem_gene_data <- analysis_data[, tem_cols_all, drop = FALSE]
+
+# TEM presence = any non-NA value in TEM columns
+analysis_data$ANY_TEM <- FALSE
+for(col in tem_cols_all) {
+  if(col %in% colnames(analysis_data)) {
+    has_gene <- !is.na(analysis_data[[col]]) & analysis_data[[col]] != ""
+    analysis_data$ANY_TEM <- analysis_data$ANY_TEM | has_gene
+  }
+}
+
+# Calculate statistics for clinical isolates (exclude lab strains)
+mer_tem_positive <- analysis_data$MER[analysis_data$ANY_TEM & !is.na(analysis_data$MER)]
+mer_tem_negative <- analysis_data$MER[!analysis_data$ANY_TEM & !is.na(analysis_data$MER)]
+
+# Statistical test
+wilcox_tem <- wilcox.test(mer_tem_positive, mer_tem_negative)
+fc_tem <- median(mer_tem_positive) / median(mer_tem_negative)
+```
+
+```{r}
+#| label: fig-tem-mer
+#| fig-cap: "Meropenem MICs stratified by TEM gene presence (any TEM variant)"
+#| fig-width: 10
+#| fig-height: 7
+
+# Prepare data for plotting
+plot_data_tem <- data.frame(
+  MER_MIC = c(mer_tem_positive, mer_tem_negative),
+  TEM_Status = c(rep("TEM-positive", length(mer_tem_positive)), 
+                 rep("TEM-negative", length(mer_tem_negative))),
+  MER_Category = ifelse(c(mer_tem_positive, mer_tem_negative) <= 2,
+                       "Susceptible (≤2 mg/L)",
+                       "Resistant (>2 mg/L)")
+)
+
+plot_data_tem$TEM_Status <- factor(plot_data_tem$TEM_Status,
+                                   levels = c("TEM-negative", "TEM-positive"),
+                                   labels = c(paste0("TEM-negative (n=", length(mer_tem_negative), ")"),
+                                            paste0("TEM-positive (n=", length(mer_tem_positive), ")")))
+
+# Create boxplot
+ggplot(plot_data_tem, aes(x = TEM_Status, y = MER_MIC, fill = TEM_Status)) +
+  geom_boxplot(alpha = 0.7, outlier.shape = NA) +
+  geom_jitter(aes(color = MER_Category), width = 0.2, size = 3, alpha = 0.8) +
+  geom_hline(yintercept = 2, linetype = "dashed", color = "red", linewidth = 0.8) +
+  scale_fill_manual(values = c("#66C2A5", "#FC8D62")) +
+  scale_color_manual(values = c("Susceptible (≤2 mg/L)" = "#2166AC",
+                                 "Resistant (>2 mg/L)" = "#B2182B")) +
+  scale_y_log10(breaks = c(0.06, 0.125, 0.25, 0.5, 1, 2, 4, 8)) +
+  labs(
+    title = "Meropenem MICs by TEM Beta-Lactamase Gene Status",
+    subtitle = paste0("KPC-31-positive isolates: TEM+ show 2-fold higher median MICs (p = ", 
+                     format.pval(wilcox_tem$p.value, digits = 3), ")"),
+    x = "TEM Gene Status",
+    y = "Meropenem MIC (mg/L, log scale)",
+    color = "Susceptibility\n(EUCAST)",
+    fill = NULL,
+    caption = "Dashed line = susceptibility breakpoint (2 mg/L)\nTEM variants: blaTEM-1, blaTEM-1A, blaTEM-1B combined"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(face = "bold", size = 14),
+    plot.subtitle = element_text(size = 11),
+    axis.title = element_text(face = "bold", size = 12),
+    legend.position = "right",
+    panel.grid.minor = element_blank()
+  ) +
+  guides(fill = "none")
+```
+
+**TEM Gene Analysis Results:**
+
+```{r}
+#| label: tbl-tem-mer-summary
+#| tbl-cap: "Meropenem susceptibility comparison by TEM gene status"
+
+tem_summary <- data.frame(
+  Group = c("TEM-positive", "TEM-negative"),
+  N = c(length(mer_tem_positive), length(mer_tem_negative)),
+  Median_MIC = c(median(mer_tem_positive), median(mer_tem_negative)),
+  Mean_MIC = c(mean(mer_tem_positive), mean(mer_tem_negative)),
+  Range = c(paste(range(mer_tem_positive), collapse = "–"),
+            paste(range(mer_tem_negative), collapse = "–")),
+  Percent_Susceptible = c(
+    sprintf("%.1f%%", 100 * sum(mer_tem_positive <= 2) / length(mer_tem_positive)),
+    sprintf("%.1f%%", 100 * sum(mer_tem_negative <= 2) / length(mer_tem_negative))
+  ),
+  Percent_Resistant = c(
+    sprintf("%.1f%%", 100 * sum(mer_tem_positive > 2) / length(mer_tem_positive)),
+    sprintf("%.1f%%", 100 * sum(mer_tem_negative > 2) / length(mer_tem_negative))
+  )
+)
+
+kable(tem_summary,
+      col.names = c("Group", "n", "Median\nMIC", "Mean\nMIC", "Range\n(mg/L)", 
+                    "% Susceptible\n(≤2 mg/L)", "% Resistant\n(>2 mg/L)"),
+      digits = c(0, 0, 1, 2, 0, 0, 0),
+      align = c("l", "r", "r", "r", "l", "r", "r")) |>
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed")) |>
+  add_footnote(sprintf("Wilcoxon rank-sum test: W = %.1f, p = %.4f (trend)", 
+                      wilcox_tem$statistic, wilcox_tem$p.value),
+               notation = "none")
+```
+
+**Key Finding:**
+
+Isolates carrying ANY TEM beta-lactamase gene show a **trend toward higher meropenem MICs**:
+
+- **2-fold higher median MIC** (4 vs 2 mg/L, p=0.056)
+- **32.7% lower susceptibility rate** (40% vs 72.7% susceptible)
+- **Borderline statistical significance** (p<0.10), clinically meaningful effect size
+
+**Interpretation:**
+
+This association is **unlikely to be causal** because:
+
+1. TEM enzymes are narrow-spectrum beta-lactamases that do NOT hydrolyze carbapenems
+2. The association more likely reflects:
+   - **Clonal effects**: TEM genes may be enriched in clones with higher KPC-31 expression or porin mutations
+   - **Co-inheritance patterns**: TEM genes on plasmids that also carry other resistance determinants or regulatory factors
+   - **Epidemiological clustering**: Different circulating strains with variable TEM carriage and carbapenem susceptibility
+
+**Clinical Implication:**
+
+While TEM genes themselves do not confer carbapenem resistance, their presence may serve as a **marker** for reduced meropenem susceptibility in KPC-31 isolates. This finding suggests possible clonal transmission of more resistant KPC-31 strains carrying TEM genes and warrants careful MIC testing when TEM genes are detected alongside KPC-31.
+
 ### Main Findings and Interpretation
 
 :::{.callout-important}
