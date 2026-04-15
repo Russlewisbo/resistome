@@ -12,6 +12,8 @@ website:
         file: resistome_genotype_phenotype_final.qmd 
       - text: "Beta-lactamase analysis"
         file: resistome_analysis_report.qmd
+      - text: "Manuscript"
+        file: manuscript.qmd
       - text: "About"
         file: about.qmd
     right:
