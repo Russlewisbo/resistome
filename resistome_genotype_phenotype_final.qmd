@@ -955,7 +955,7 @@ While individual TEM variants showed no significant association with meropenem M
 #| include: false
 
 # Create combined TEM indicator (ANY TEM gene present)
-tem_cols_all <- c("bla TEM_1", "blaTEM_1A", "blaTEM_1B")
+tem_cols_all <- c("bla_TEM_1", "blaTEM_1A", "blaTEM_1B")
 tem_gene_data <- analysis_data[, tem_cols_all, drop = FALSE]
 
 # TEM presence = any non-NA value in TEM columns
@@ -971,9 +971,19 @@ for(col in tem_cols_all) {
 mer_tem_positive <- analysis_data$MER[analysis_data$ANY_TEM & !is.na(analysis_data$MER)]
 mer_tem_negative <- analysis_data$MER[!analysis_data$ANY_TEM & !is.na(analysis_data$MER)]
 
-# Statistical test
-wilcox_tem <- wilcox.test(mer_tem_positive, mer_tem_negative)
-fc_tem <- median(mer_tem_positive) / median(mer_tem_negative)
+# Statistical test — guard against too-few-observations error
+wilcox_tem <- tryCatch(
+  wilcox.test(mer_tem_positive, mer_tem_negative),
+  error = function(e) list(p.value = NA_real_)
+)
+fc_tem <- {
+  denom <- median(mer_tem_negative, na.rm = TRUE)
+  if (length(mer_tem_positive) > 0 && length(mer_tem_negative) > 0 && !is.na(denom) && denom != 0) {
+    median(mer_tem_positive, na.rm = TRUE) / denom
+  } else {
+    NA_real_
+  }
+}
 ```
 
 ```{r}
@@ -1033,32 +1043,39 @@ ggplot(plot_data_tem, aes(x = TEM_Status, y = MER_MIC, fill = TEM_Status)) +
 #| label: tbl-tem-mer-summary
 #| tbl-cap: "Meropenem susceptibility comparison by TEM gene status"
 
+safe_stat <- function(x, fn) if (length(x) > 0) fn(x, na.rm = TRUE) else NA_real_
+safe_range <- function(x) {
+  if (length(x) > 0) paste(range(x, na.rm = TRUE), collapse = "–") else "–"
+}
+safe_pct <- function(x, condition) {
+  if (length(x) > 0) sprintf("%.1f%%", 100 * sum(condition) / length(x)) else "–"
+}
+
 tem_summary <- data.frame(
   Group = c("TEM-positive", "TEM-negative"),
   N = c(length(mer_tem_positive), length(mer_tem_negative)),
-  Median_MIC = c(median(mer_tem_positive), median(mer_tem_negative)),
-  Mean_MIC = c(mean(mer_tem_positive), mean(mer_tem_negative)),
-  Range = c(paste(range(mer_tem_positive), collapse = "–"),
-            paste(range(mer_tem_negative), collapse = "–")),
+  Median_MIC = c(safe_stat(mer_tem_positive, median), safe_stat(mer_tem_negative, median)),
+  Mean_MIC   = c(safe_stat(mer_tem_positive, mean),   safe_stat(mer_tem_negative, mean)),
+  Range = c(safe_range(mer_tem_positive), safe_range(mer_tem_negative)),
   Percent_Susceptible = c(
-    sprintf("%.1f%%", 100 * sum(mer_tem_positive <= 2) / length(mer_tem_positive)),
-    sprintf("%.1f%%", 100 * sum(mer_tem_negative <= 2) / length(mer_tem_negative))
+    safe_pct(mer_tem_positive, mer_tem_positive <= 2),
+    safe_pct(mer_tem_negative, mer_tem_negative <= 2)
   ),
   Percent_Resistant = c(
-    sprintf("%.1f%%", 100 * sum(mer_tem_positive > 2) / length(mer_tem_positive)),
-    sprintf("%.1f%%", 100 * sum(mer_tem_negative > 2) / length(mer_tem_negative))
+    safe_pct(mer_tem_positive, mer_tem_positive > 2),
+    safe_pct(mer_tem_negative, mer_tem_negative > 2)
   )
 )
 
+p_label <- ifelse(!is.na(wilcox_tem$p.value), sprintf("Wilcoxon rank-sum test: p = %.4f", wilcox_tem$p.value), "Wilcoxon rank-sum test: insufficient data in one group")
+
 kable(tem_summary,
-      col.names = c("Group", "n", "Median\nMIC", "Mean\nMIC", "Range\n(mg/L)", 
+      col.names = c("Group", "n", "Median\nMIC", "Mean\nMIC", "Range\n(mg/L)",
                     "% Susceptible\n(≤2 mg/L)", "% Resistant\n(>2 mg/L)"),
       digits = c(0, 0, 1, 2, 0, 0, 0),
       align = c("l", "r", "r", "r", "l", "r", "r")) |>
   kable_styling(bootstrap_options = c("striped", "hover", "condensed")) |>
-  add_footnote(sprintf("Wilcoxon rank-sum test: W = %.1f, p = %.4f (trend)", 
-                      wilcox_tem$statistic, wilcox_tem$p.value),
-               notation = "none")
+  add_footnote(p_label, notation = "none")
 ```
 
 **Key Finding:**

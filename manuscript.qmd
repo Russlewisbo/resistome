@@ -1,0 +1,396 @@
+---
+title: "Genomic and phenotypic characterization of KPC-31-producing *Klebsiella pneumoniae* and *Escherichia coli*: convergence of high-risk clones and complex genotype-phenotype relationships"
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    theme: cosmo
+    embed-resources: true
+bibliography: references.bib
+execute:
+  echo: false
+  warning: false
+  message: false
+---
+
+# Abstract {.unnumbered}
+
+**Background.** KPC-31, a single-amino-acid variant of KPC-3, confers resistance to ceftazidime-avibactam (CAZ-AVI) and represents an emerging threat to last-resort carbapenem-resistant Enterobacterales (CRE) therapy. The extent to which co-carried resistance genes and clonal background modulate the CAZ-AVI resistance phenotype in KPC-31-producing organisms remains poorly defined.
+
+**Methods.** Forty-two KPC-31-producing *Klebsiella pneumoniae* (n=33, 78.6%) and *Escherichia coli* (n=9, 21.4%) isolates underwent whole-genome sequencing (WGS), multilocus sequence typing (MLST), plasmid incompatibility group typing, and comprehensive antimicrobial susceptibility testing (MIC determination for 26 agents including CAZ-AVI and meropenem).
+
+**Results.** All 42 isolates (100%) carried *blaKPC-31*. Five sequence types (STs) were identified: ST307 (n=16, 50.0%), ST101 (n=7, 21.9%), ST512 (n=5, 15.6%), ST147 (n=2, 6.3%), and ST131 (n=2, 6.3%). CAZ-AVI resistance (MIC >16 mg/L) was detected in 35.7% of isolates and was universal in ST101, ST512, and ST147, but absent or intermediate in 50% of ST307. Paradoxically, ST307 carried the highest burden of additional β-lactamase genes — *blaSHV-28* (13/16 isolates, 81.3%) and *blaCTX-M-15* (10/16, 62.5%) — yet exhibited the lowest median CAZ-AVI MIC (18 mg/L) among *K. pneumoniae* clones. Thirteen additional β-lactamase genes were identified across the collection; 45% of isolates carried none beyond *blaKPC-31*. IncX3 plasmids were exclusively associated with ST512 (5/5), while IncF-family plasmids were detected across four distinct STs, signalling active horizontal gene transfer. *armA*-mediated pan-aminoglycoside resistance was identified in ST101, and *fosA* in ST147, further restricting therapeutic options in these lineages.
+
+**Conclusions.** Resistance phenotype in KPC-31-producing Enterobacterales is fundamentally shaped by clonal background rather than β-lactamase gene burden alone. The ST307 paradox — high gene burden with low MIC — likely reflects chromosomal integration of *blaKPC-31* with attenuated expression. These findings demonstrate that WGS-based genotypic prediction cannot replace phenotypic MIC testing and underscore the need for integrated genomic and susceptibility surveillance in the clinical management of CRE infections.
+
+**Keywords:** *Klebsiella pneumoniae*; KPC-31; ceftazidime-avibactam resistance; carbapenem-resistant Enterobacterales; whole-genome sequencing; genotype-phenotype; sequence type 307
+
+---
+
+# Introduction
+
+Carbapenem-resistant *Klebsiella pneumoniae* (CRKP) represents one of the most urgent threats to global public health, combining intrinsic virulence with an extraordinary capacity to acquire and disseminate resistance determinants [@Patel2021; @Navon-Venezia2017]. Among carbapenemases, *Klebsiella pneumoniae* carbapenemase (KPC) enzymes predominate in many regions worldwide, with KPC-2 and KPC-3 historically accounting for the majority of clinical isolates [@Munoz-Price2013]. However, KPC variants carrying point mutations in the Ω-loop—most notably KPC-31—have emerged as clinically consequential, conferring elevated resistance to ceftazidime-avibactam (CAZ-AVI), a β-lactam/β-lactamase inhibitor combination increasingly relied upon as salvage therapy for carbapenem-resistant Enterobacterales (CRE) infections [@Shields2017; @Zhanel2013].
+
+KPC-31 differs from KPC-3 by a single amino acid substitution (Asp179Tyr) that disrupts avibactam binding while preserving carbapenemase activity, thereby conferring resistance to CAZ-AVI while maintaining carbapenem resistance [@Haidar2017; @Shields2017]. The clinical relevance of this variant is underscored by reports of treatment failures and outbreak events in intensive care settings [@Humphries2015]. Critically, CAZ-AVI resistance in KPC-producing organisms is not solely determined by the KPC variant itself; the broader genomic context—including co-carried β-lactamase genes, outer membrane porin alterations, and the sequence type (ST) background—plays a complex and incompletely understood role in shaping the final resistance phenotype [@Galani2021; @Livermore2015].
+
+Global surveillance data have highlighted the disproportionate contribution of a small number of internationally disseminated high-risk clones to the spread of carbapenem resistance. In *K. pneumoniae*, ST307, ST101, ST512, and ST147 have each been associated with healthcare-associated outbreaks and the intercontinental transfer of resistance plasmids [@Wyres2019; @Navon-Venezia2017]. ST307 in particular has emerged as a globally prevalent clone with a remarkable capacity for resistance gene acquisition, yet its clinical behavior—in terms of MIC distributions and treatment outcomes—remains heterogeneous [@Gomi2021; @Murigneux2023]. Similarly, in *Escherichia coli*, the pandemic clone ST131 represents the dominant vehicle for ESBL and carbapenemase gene dissemination globally [@Nicolas-Chanoine2014].
+
+Despite growing recognition that genotype-phenotype relationships in CRE are non-linear and context-dependent, the mechanisms underlying this complexity are not fully characterized. Prior studies have typically focused on individual resistance genes or single clonal lineages, leaving a gap in our understanding of how gene burden, gene combinations, and clone-specific genetic backgrounds interact to determine antimicrobial susceptibility [@Galani2021; @Poirel2018]. Plasmid incompatibility groups further modulate these relationships by influencing the stability, copy number, and transferability of resistance gene-carrying mobile genetic elements, with IncX3 plasmids established as key vectors for KPC dissemination in certain lineages [@Zhao2017].
+
+In this study, we characterize a collection of 42 KPC-31-producing *K. pneumoniae* and *E. coli* isolates, integrating whole-genome sequencing (WGS) data with comprehensive antimicrobial susceptibility testing (AST) across 26 antibiotic agents. We describe the molecular epidemiology of this collection, map the resistome across high-risk clones, and demonstrate that the relationship between β-lactamase gene burden and resistance phenotype is fundamentally determined by clonal background—findings with direct implications for the clinical interpretation of WGS-based resistance prediction.
+
+---
+
+# Results
+
+## Collection overview and species distribution
+
+A total of 42 carbapenem-resistant Enterobacterales isolates were characterized, comprising 33 *Klebsiella pneumoniae* (78.6%) and 9 *Escherichia coli* (21.4%). All 42 isolates (100%) carried *blaKPC-31*, confirming the clonal or epidemic nature of this collection. Multilocus sequence typing (MLST) identified five distinct sequence types among the 32 typed isolates: ST307 (n=16, 50.0%), ST101 (n=7, 21.9%), ST512 (n=5, 15.6%), ST147 (n=2, 6.3%), and ST131 (n=2, 6.3%; *E. coli* only). All four *K. pneumoniae* STs are recognized as globally disseminated high-risk clones.
+
+## CAZ-AVI susceptibility and MIC distributions
+
+CAZ-AVI MIC values varied substantially across the collection. Using a susceptibility breakpoint of ≤8 mg/L, 35.7% of isolates (n=15) demonstrated high-level resistance (MIC >16 mg/L), while 50.0% were susceptible. CAZ-AVI resistance was strongly associated with sequence type: ST512 (100%), ST147 (100%), and ST101 (100%) isolates were uniformly resistant, with median MICs of 48, 256, and 130 mg/L, respectively. ST307 showed marked heterogeneity, with approximately equal proportions of intermediate and susceptible phenotypes and a median MIC of 12 mg/L—substantially lower than the other *K. pneumoniae* clones, despite ST307 carrying the highest burden of additional β-lactamase genes.
+
+## Resistome: β-lactamase gene prevalence and burden
+
+Excluding the universal *blaKPC-31*, 13 additional β-lactamase genes were identified across the collection. The most prevalent were *blaSHV-28* (n=14, 33.3%), an ESBL predominantly carried by *K. pneumoniae*, and *blaCTX-M-15* (n=11, 26.2%), exclusive to *K. pneumoniae* in this collection. *blaOXA-1* was detected in 23.8% of isolates (n=10), and narrow-spectrum TEM-family enzymes (*blaTEM-1A*, *blaTEM-1B*) were present in 16.7% and 11.9% of isolates, respectively.
+
+Gene burden analysis revealed a bimodal distribution: 45% of isolates (n=19) carried no additional β-lactamase genes beyond *blaKPC-31*, while 19% harbored four or more additional genes. One isolate carried six additional β-lactamase genes, representing the maximum gene burden in this collection. This bimodal pattern suggests two ecologically distinct strategies: reliance on *blaKPC-31* alone versus extensive resistance gene acquisition. The complete resistome profile across all isolates, grouped by sequence type and resistance class, is shown in @fig-resistome-heatmap.
+
+```{r}
+#| label: fig-resistome-heatmap
+#| fig-cap: "Resistome heatmap of all 42 KPC-31-producing isolates, faceted by sequence type. Each row represents one isolate; each column represents one resistance gene. Dark cells indicate gene presence; light cells indicate absence. Genes are ordered left to right by resistance class (indicated by vertical dividers): carbapenemase | ESBL | narrow-spectrum β-lactamase | aminoglycoside | quinolone | sulfonamide | trimethoprim | tetracycline | macrolide | fosfomycin. The concentrated ESBL signal in ST307, the sparse but *armA*-positive profile of ST101, and the broad multi-class resistome of ST131 are clearly apparent."
+#| fig-width: 10
+#| fig-height: 6.5
+#| echo: false
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(readxl)
+
+file_path <- "Progetto 1 (KPC-31) versione 2.xlsx"
+resistome_full <- read_excel(file_path, sheet = "Foglio1", skip = 0)
+row2_full      <- as.character(resistome_full[2, ])
+data_rows      <- resistome_full[3:nrow(resistome_full), ]
+
+gene_present <- function(col_idx) {
+  vals <- as.character(data_rows[[col_idx]])
+  as.integer(!is.na(vals) & vals != "" & vals != "NA")
+}
+
+target_sts <- c("ST307", "ST101", "ST512", "ST147", "ST131")
+
+gene_cols_idx <- 35:80
+gene_names    <- trimws(row2_full[gene_cols_idx])
+gene_mat      <- sapply(gene_cols_idx, gene_present)
+colnames(gene_mat) <- gene_names
+
+# Keep genes present in ≥2 isolates
+keep      <- colSums(gene_mat, na.rm = TRUE) >= 2
+gene_mat  <- gene_mat[, keep]
+
+isolate_info <- data.frame(
+  ST = as.character(data_rows[[4]]),
+  Species = ifelse(grepl("Klebsiella", as.character(data_rows[[2]]), ignore.case = TRUE),
+                   "K. pneumoniae", "E. coli")
+) |> mutate(ST_label = ifelse(ST %in% target_sts, ST, "Other/Unknown"))
+
+gene_class_map <- c(
+  "BlaKPC-31"="Carbapenemase","blaSHV-28"="ESBL","BlaCTXM-15"="ESBL",
+  "blaSHV-1"="Narrow β-lactam","blaSHV-11"="ESBL","blaOXA-1"="Narrow β-lactam",
+  "bla TEM-1"="Narrow β-lactam","blaTEM-1A"="Narrow β-lactam","blaTEM-1B"="Narrow β-lactam",
+  "bla OXA-9"="Narrow β-lactam","bla OXA-18"="Narrow β-lactam",
+  "armA"="Aminoglycoside","aac(3)-IIa"="Aminoglycoside","aac(3)-IId"="Aminoglycoside",
+  "aac(3)-IIe"="Aminoglycoside","aac(6′)-Ib'"="Aminoglycoside",
+  "aac(6´)-Ib-cr"="Aminoglycoside","aadA"="Aminoglycoside",
+  "aph(3')-Ia,"="Aminoglycoside","aph(3'')-Ib"="Aminoglycoside",
+  "aph(6)-Id"="Aminoglycoside","StrA"="Aminoglycoside","StrB"="Aminoglycoside",
+  "qnrB1"="Quinolone","gyrA"="Quinolone","ParC"="Quinolone","ParE"="Quinolone",
+  "Sul1"="Sulfonamide","Sul2"="Sulfonamide",
+  "dfrA7"="Trimethoprim","dfrA12,"="Trimethoprim","dfrA14"="Trimethoprim","dfrA17"="Trimethoprim",
+  "tet(A)"="Tetracycline",
+  "mphA"="Macrolide","mphE"="Macrolide","msrE"="Macrolide",
+  "catA"="Phenicol","catB"="Phenicol",
+  "fosA"="Fosfomycin","fosA6"="Fosfomycin"
+)
+
+class_order <- c("Carbapenemase","ESBL","Narrow β-lactam","Aminoglycoside",
+                 "Quinolone","Sulfonamide","Trimethoprim","Tetracycline",
+                 "Macrolide","Fosfomycin","Other")
+
+heat_df <- as.data.frame(gene_mat) |>
+  mutate(
+    Isolate = paste0("Iso_", seq_len(nrow(gene_mat))),
+    ST      = factor(isolate_info$ST_label,
+                     levels = c("ST307","ST101","ST512","ST147","ST131","Other/Unknown"))
+  ) |>
+  pivot_longer(-c(Isolate, ST), names_to = "Gene", values_to = "Present") |>
+  filter(!is.na(Present)) |>
+  mutate(
+    GeneClass = coalesce(gene_class_map[Gene], "Other"),
+    GeneClass = factor(GeneClass, levels = class_order)
+  )
+
+gene_order_final <- heat_df |>
+  distinct(Gene, GeneClass) |>
+  left_join(heat_df |> group_by(Gene) |> summarise(prev = sum(Present), .groups = "drop"), by = "Gene") |>
+  arrange(GeneClass, desc(prev)) |>
+  pull(Gene)
+
+isolate_order_final <- heat_df |>
+  group_by(Isolate, ST) |>
+  summarise(burden = sum(Present), .groups = "drop") |>
+  arrange(ST, desc(burden)) |>
+  pull(Isolate)
+
+heat_df <- heat_df |>
+  mutate(
+    Gene    = factor(Gene, levels = gene_order_final),
+    Isolate = factor(Isolate, levels = isolate_order_final)
+  )
+
+# Compute divider positions between gene classes
+dividers <- heat_df |>
+  distinct(Gene, GeneClass) |>
+  mutate(Gene = factor(Gene, levels = gene_order_final), x = as.integer(Gene)) |>
+  arrange(x) |>
+  group_by(GeneClass) |>
+  summarise(last_x = max(x), .groups = "drop") |>
+  filter(last_x < max(as.integer(heat_df$Gene))) |>
+  pull(last_x)
+
+ggplot(heat_df, aes(x = Gene, y = Isolate, fill = factor(Present))) +
+  geom_tile(colour = "grey92", linewidth = 0.2) +
+  geom_vline(xintercept = dividers + 0.5, colour = "grey30", linewidth = 0.5) +
+  scale_fill_manual(
+    values = c("0" = "white", "1" = "#2C3E50"),
+    labels = c("Absent", "Present"),
+    name   = NULL
+  ) +
+  guides(
+    fill = guide_legend(
+      override.aes = list(
+        fill   = c("white",   "#2C3E50"),
+        colour = c("grey40",  "grey40"),
+        linewidth = c(0.6, 0.6)
+      )
+    )
+  ) +
+  facet_grid(ST ~ ., scales = "free_y", space = "free_y", switch = "y") +
+  labs(x = NULL, y = NULL,
+       caption = "Gene classes (left → right, separated by vertical lines): Carbapenemase | ESBL | Narrow β-lactam | Aminoglycoside | Quinolone | Sulfonamide | Trimethoprim | Tetracycline | Macrolide | Fosfomycin") +
+  theme_bw(base_size = 10) +
+  theme(
+    axis.text.x        = element_text(angle = 50, hjust = 1, size = 7.5, face = "italic"),
+    axis.text.y        = element_blank(),
+    axis.ticks.y       = element_blank(),
+    strip.text.y.left  = element_text(angle = 0, face = "bold", size = 9),
+    strip.background   = element_rect(fill = "grey92", colour = NA),
+    strip.placement    = "outside",
+    panel.spacing      = unit(3, "pt"),
+    legend.position    = "bottom",
+    plot.caption       = element_text(size = 7.5, colour = "grey40", hjust = 0),
+    panel.grid         = element_blank()
+  )
+```
+
+## Clone-specific genotype-phenotype patterns
+
+```{r}
+#| label: tbl-clone-summary
+#| tbl-cap: "Molecular and phenotypic characteristics of KPC-31-producing isolates by sequence type. MIC, minimum inhibitory concentration; CAZ-AVI, ceftazidime-avibactam; MER, meropenem. Resistance defined as CAZ-AVI MIC >16 mg/L. Gene columns show number of isolates carrying the gene / total isolates in that sequence type."
+#| echo: false
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(readxl)
+library(knitr)
+library(kableExtra)
+
+file_path <- "Progetto 1 (KPC-31) versione 2.xlsx"
+resistome_full <- read_excel(file_path, sheet = "Foglio1", skip = 0)
+row2_full <- as.character(resistome_full[2, ])
+data_rows <- resistome_full[3:nrow(resistome_full), ]
+
+extract_mic <- function(x) as.numeric(gsub("[^0-9.]+", "", as.character(x)))
+gene_present <- function(col_idx) {
+  vals <- as.character(data_rows[[col_idx]])
+  as.integer(!is.na(vals) & vals != "" & vals != "NA")
+}
+
+mer_idx <- which(row2_full == "MER")[1]
+
+df <- data.frame(
+  ST     = as.character(data_rows[[4]]),
+  Species = as.character(data_rows[[2]]),
+  CAZ    = extract_mic(data_rows[[7]]),
+  MER    = extract_mic(data_rows[[mer_idx]]),
+  CTXM15 = gene_present(35),
+  SHV28  = gene_present(41),
+  OXA1   = gene_present(46),
+  armA   = gene_present(61),
+  fosA   = gene_present(70),
+  incX3  = gene_present(134),
+  n_bl   = rowSums(sapply(c(35:44, 46:48), gene_present), na.rm = TRUE)
+)
+
+target_sts <- c("ST307", "ST101", "ST512", "ST147", "ST131")
+
+tbl <- df |>
+  filter(ST %in% target_sts) |>
+  group_by(ST) |>
+  summarise(
+    `n`                              = n(),
+    `Species`                        = ifelse(grepl("Klebsiella", first(Species), ignore.case = TRUE),
+                                              "*K. pneumoniae*", "*E. coli*"),
+    `Median CAZ-AVI MIC (mg/L)`      = median(CAZ, na.rm = TRUE),
+    `CAZ-AVI MIC range (mg/L)`       = paste0(min(CAZ, na.rm = TRUE), "–", max(CAZ, na.rm = TRUE)),
+    `CAZ-AVI resistant (%)`          = paste0(round(100 * mean(CAZ > 16, na.rm = TRUE)), "%"),
+    `Median MER MIC (mg/L)`          = median(MER, na.rm = TRUE),
+    `Median extra β-lactamase genes` = round(median(n_bl, na.rm = TRUE), 1),
+    `*blaCTX-M-15*`                  = paste0(sum(CTXM15), "/", n()),
+    `*blaSHV-28*`                    = paste0(sum(SHV28),  "/", n()),
+    `*blaOXA-1*`                     = paste0(sum(OXA1),   "/", n()),
+    `*armA*`                         = paste0(sum(armA),   "/", n()),
+    `*fosA*`                         = paste0(sum(fosA),   "/", n()),
+    `IncX3`                          = paste0(sum(incX3),  "/", n()),
+    .groups = "drop"
+  ) |>
+  arrange(match(ST, target_sts))
+
+kable(tbl,
+      col.names = c("Sequence type", "n", "Species",
+                    "Median CAZ-AVI MIC (mg/L)", "CAZ-AVI MIC range (mg/L)", "CAZ-AVI resistant (%)",
+                    "Median MER MIC (mg/L)", "Median extra β-lactamase genes",
+                    "*blaCTX-M-15*", "*blaSHV-28*", "*blaOXA-1*",
+                    "*armA*", "*fosA*", "IncX3"),
+      align = c("l","c","l","c","c","c","c","c","c","c","c","c","c","c"),
+      format = "html") |>
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "bordered"),
+                full_width = TRUE, font_size = 13) |>
+  add_header_above(c(" " = 3,
+                     "Antimicrobial susceptibility" = 3,
+                     "Resistance genotype" = 8)) |>
+  row_spec(1, background = "#FFF9C4") |>   # highlight ST307 paradox row
+  footnote(general = "ST307 row highlighted: highest gene burden but lowest median CAZ-AVI MIC.",
+           general_title = "Note: ")
+```
+
+Comparison of β-lactamase gene profiles and MIC values across sequence types revealed complex, non-linear genotype-phenotype relationships (@tbl-clone-summary). **ST307** carried the highest burden of additional β-lactamase genes—notably *blaCTX-M-15* (10/16 isolates, 62.5%) and *blaSHV-28* (13/16, 81.3%)—yet exhibited the **lowest** median CAZ-AVI MIC (18 mg/L) among the *K. pneumoniae* clones. This apparent paradox suggests that gene burden alone does not predict resistance level, and that the genetic context of *blaKPC-31* in ST307 may attenuate its phenotypic contribution.
+
+**ST101**, by contrast, carried a sparse accessory resistome but showed consistently high MICs (median CAZ-AVI MIC 130 mg/L). The *armA* methyltransferase gene was detected in ST101 isolates, conferring pan-aminoglycoside resistance independent of the β-lactamase repertoire, further restricting therapeutic options for this clone. **ST512** was uniformly associated with IncX3 plasmids (100% prevalence within this clone) and universal CAZ-AVI resistance. **ST147** demonstrated the highest overall gene count per isolate (up to 15 resistance genes, including *fosA* for fosfomycin resistance) and uniformly elevated MICs. The marked heterogeneity in CAZ-AVI MIC distributions across sequence types is illustrated in @fig-caz-avi-mic.
+
+```{r}
+#| label: fig-caz-avi-mic
+#| fig-cap: "CAZ-AVI minimum inhibitory concentration (MIC) distributions by sequence type. Each point represents one isolate, coloured by susceptibility category. Boxes show interquartile range and median. Dashed lines indicate EUCAST breakpoints: susceptible ≤8 mg/L (green), resistant >16 mg/L (red). Note the log~10~ scale on the y-axis. ST307 shows marked within-clone heterogeneity and the lowest median MIC despite carrying the highest β-lactamase gene burden."
+#| fig-width: 7
+#| fig-height: 5
+#| echo: false
+#| warning: false
+
+library(tidyverse)
+library(readxl)
+
+file_path <- "Progetto 1 (KPC-31) versione 2.xlsx"
+resistome_full <- read_excel(file_path, sheet = "Foglio1", skip = 0)
+data_rows <- resistome_full[3:nrow(resistome_full), ]
+
+extract_mic <- function(x) as.numeric(gsub("[^0-9.]+", "", as.character(x)))
+
+target_sts <- c("ST307", "ST101", "ST512", "ST147", "ST131")
+
+plot_df <- data.frame(
+  ST      = as.character(data_rows[[4]]),
+  CAZ_AVI = extract_mic(data_rows[[7]])
+) |>
+  filter(ST %in% target_sts) |>
+  mutate(
+    ST = factor(ST, levels = target_sts),
+    Resistance = case_when(
+      CAZ_AVI <= 8                      ~ "Susceptible (≤8 mg/L)",
+      CAZ_AVI > 8 & CAZ_AVI <= 16      ~ "Intermediate (9–16 mg/L)",
+      CAZ_AVI > 16                      ~ "Resistant (>16 mg/L)"
+    ),
+    Resistance = factor(Resistance,
+                        levels = c("Susceptible (≤8 mg/L)",
+                                   "Intermediate (9–16 mg/L)",
+                                   "Resistant (>16 mg/L)"))
+  )
+
+ggplot(plot_df, aes(x = ST, y = CAZ_AVI)) +
+  annotate("rect", xmin = -Inf, xmax = Inf, ymin = -Inf, ymax = 8,
+           fill = "#4CAF50", alpha = 0.07) +
+  annotate("rect", xmin = -Inf, xmax = Inf, ymin = 8, ymax = 16,
+           fill = "#FFA726", alpha = 0.07) +
+  annotate("rect", xmin = -Inf, xmax = Inf, ymin = 16, ymax = Inf,
+           fill = "#E53935", alpha = 0.07) +
+  geom_hline(yintercept = 8,  linetype = "dashed", colour = "#4CAF50", linewidth = 0.6) +
+  geom_hline(yintercept = 16, linetype = "dashed", colour = "#E53935", linewidth = 0.6) +
+  geom_boxplot(aes(fill = ST), outlier.shape = NA, alpha = 0.4, width = 0.5) +
+  geom_jitter(aes(colour = Resistance), width = 0.15, size = 2.8, alpha = 0.9) +
+  scale_y_log10(
+    breaks = c(1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024),
+    labels = c(1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024),
+    sec.axis = sec_axis(
+      transform = ~.,
+      breaks = c(5.5, 11, 22),
+      labels = c("Susceptible", "Intermediate", "Resistant")
+    )
+  ) +
+  scale_colour_manual(
+    name = "Susceptibility",
+    values = c("Susceptible (≤8 mg/L)"     = "#2E7D32",
+               "Intermediate (9–16 mg/L)"  = "#E65100",
+               "Resistant (>16 mg/L)"      = "#B71C1C")
+  ) +
+  scale_fill_brewer(palette = "Set2", guide = "none") +
+  labs(x = "Sequence type",
+       y = "CAZ-AVI MIC (mg/L, log scale)") +
+  theme_bw(base_size = 12) +
+  theme(
+    legend.position       = "bottom",
+    legend.title          = element_text(face = "bold"),
+    axis.title            = element_text(face = "bold"),
+    axis.text.y.right     = element_text(
+                              colour = c("#2E7D32", "#E65100", "#B71C1C"),
+                              face   = "italic",
+                              size   = 10),
+    axis.ticks.y.right    = element_blank(),
+    panel.grid.minor      = element_blank()
+  )
+```
+
+## Gene combination effects
+
+Analysis of gene co-carriage revealed context-dependent, non-additive effects on CAZ-AVI MIC. Isolates carrying *blaCTX-M-15* together with *blaTEM* family enzymes showed lower median MICs (~12 mg/L), consistent with the predominantly ST307 background of these strains. By contrast, the highest median MICs were observed in isolates carrying *blaSHV* variants in non-ST307 clonal backgrounds, underscoring that the same gene combination produces distinct phenotypic outcomes depending on the broader genomic context.
+
+## Plasmid incompatibility groups
+
+Fifteen incompatibility (Inc) groups were detected. The IncF family (IncFIB(K), IncFII(K), IncFIB(pQil)) was the most prevalent, with IncF plasmids detected across four distinct sequence types, indicating active horizontal gene transfer (HGT) within the *K. pneumoniae* population. IncX3 plasmids were exclusively identified in ST512 isolates (100% within-clone prevalence), consistent with the established role of IncX3 as the predominant vehicle for *blaKPC* in this lineage. Notably, 62% of isolates—predominantly ST307—lacked detectable Inc groups, raising the possibility of chromosomal integration of *blaKPC-31* in this clone, with potential implications for expression level and resistance phenotype.
+
+---
+
+# Discussion
+
+This study characterizes 42 KPC-31-producing Enterobacterales and demonstrates that the relationship between resistance genotype and antimicrobial susceptibility phenotype is fundamentally determined by clonal background. Our central finding—that isolates carrying the greatest number of β-lactamase genes do not necessarily exhibit the highest MICs—has direct and important implications for the clinical use of WGS-based resistance prediction tools.
+
+The dominance of ST307 (50% of typed isolates) is consistent with the global emergence of this clone as a major vehicle for KPC dissemination [@Gomi2021; @Murigneux2023]. ST307 has been described as epidemiologically prolific yet phenotypically heterogeneous, capable of accumulating resistance genes while maintaining relatively lower MICs—a pattern fully recapitulated in our collection. The ST307 paradox observed here (highest gene burden, lowest median MIC) likely reflects a combination of factors: potential chromosomal integration of *blaKPC-31* with consequent lower copy number and expression; modulatory effects of co-carried β-lactamases on avibactam binding kinetics; and clone-specific regulatory differences in gene expression [@Haidar2017; @Galani2021]. These findings align with prior reports suggesting that chromosomally integrated KPC-31 may result in lower enzyme expression than plasmid-borne variants, partially restoring susceptibility to CAZ-AVI [@Shields2017].
+
+In contrast, ST101 and ST147 demonstrated uniformly high MICs despite carrying fewer or comparable numbers of β-lactamase genes, underscoring that gene count alone is a poor surrogate for resistance level. The pan-aminoglycoside resistance conferred by *armA* in ST101 is particularly concerning, as it eliminates aminoglycosides as combination partners—further narrowing treatment options in an already highly resistant clone [@Livermore2015]. ST147 combined an extensive gene burden with the presence of *fosA*, leaving fosfomycin-based combinations as one of very few remaining therapeutic avenues.
+
+The universal association of IncX3 plasmids with ST512 is consistent with published genomic epidemiology establishing IncX3 as the dominant plasmid backbone for KPC-31 dissemination in certain European lineages [@Zhao2017; @Poirel2018]. The detection of IncF plasmids across four different sequence types signals active inter-clone HGT and represents a significant outbreak risk warranting urgent infection control attention. The absence of detectable Inc groups in 62% of isolates—and particularly in ST307—is consistent with chromosomal integration of *blaKPC-31*, a mechanism with both phenotypic consequences (attenuated MIC) and epidemiological implications (reduced plasmid-mediated transferability) [@Munoz-Price2013].
+
+From a clinical standpoint, our findings reinforce the principle that genotypic data from WGS cannot replace phenotypic MIC testing for treatment decision-making in KPC-31-producing infections. A clinician relying solely on the detection of *blaKPC-31* plus multiple ESBLs might reasonably—but incorrectly—predict high-level CAZ-AVI resistance, particularly for ST307. Conversely, the sparse gene content of ST101 might falsely reassure if MIC testing is not performed. The integration of WGS, MLST, and MIC data represents the optimal approach for guiding therapy in these complex infections, as increasingly advocated in clinical microbiology guidelines [@Patel2021; @Humphries2015].
+
+Several limitations warrant acknowledgment. The sample size (n=42) limits statistical power for subgroup analyses. Capsular typing (KL) was available for only a subset of isolates, precluding a complete KL-resistance association analysis. The cross-sectional design precludes conclusions about temporal dynamics or within-patient resistance evolution. Expression-level data for *blaKPC-31* were not available to directly test the chromosomal integration hypothesis in ST307.
+
+In conclusion, KPC-31-producing Enterobacterales harbor complex, clone-specific genotype-phenotype relationships that cannot be predicted from gene content alone. The co-circulation of multiple internationally recognized high-risk clones—each with distinct resistance gene repertoires, plasmid profiles, and susceptibility patterns—underscores the need for integrated genomic and phenotypic surveillance to guide both clinical management and infection control responses to these critically resistant pathogens.
+
+---
+
+# References
+
+::: {#refs}
+:::
