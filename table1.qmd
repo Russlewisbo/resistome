@@ -1,0 +1,143 @@
+---
+title: "Table 1. Molecular and clinical characteristics of KPC-31-producing isolates"
+format:
+  html:
+    toc: false
+    embed-resources: true
+    theme: cosmo
+    fontsize: 0.95em
+execute:
+  echo: false
+  warning: false
+  message: false
+---
+
+```{r setup}
+library(tidyverse)
+library(readxl)
+library(knitr)
+library(kableExtra)
+
+file_path <- "Progetto 1 (KPC-31) versione 2.xlsx"
+resistome_full <- read_excel(file_path, sheet = "Foglio1", skip = 0)
+row2_full      <- as.character(resistome_full[2, ])
+data_rows      <- resistome_full[3:nrow(resistome_full), ]
+
+extract_mic <- function(x) as.numeric(gsub("[^0-9.]+", "", as.character(x)))
+gene_present <- function(col_idx) {
+  vals <- as.character(data_rows[[col_idx]])
+  as.integer(!is.na(vals) & vals != "" & vals != "NA")
+}
+
+mer_idx <- which(row2_full == "MER")[1]
+
+source_cat <- function(x) {
+  dplyr::case_when(
+    x %in% c("BLOOD", "BC")                   ~ "Bloodstream",
+    x %in% c("AF", "A.C", "Ascitic fluid")     ~ "Ascites",
+    x %in% c("Pus", "TMR")                     ~ "Wound/Surgical",
+    x %in% c("RS", "BAL", "Tracheal aspirate") ~ "Respiratory",
+    x %in% c("UR")                             ~ "Urine",
+    x %in% c("RTS", "Surveillance")            ~ "Surveillance",
+    is.na(x)                                   ~ "Not recorded",
+    TRUE                                       ~ x
+  )
+}
+
+df <- data.frame(
+  ST      = as.character(data_rows[[4]]),
+  Species = as.character(data_rows[[2]]),
+  Source  = source_cat(as.character(data_rows[[3]])),
+  CAZ     = extract_mic(data_rows[[7]]),
+  MER     = extract_mic(data_rows[[mer_idx]]),
+  CTXM15  = gene_present(35),
+  SHV28   = gene_present(41),
+  OXA1    = gene_present(46),
+  armA    = gene_present(61),
+  fosA    = gene_present(70),
+  incX3   = gene_present(134),
+  n_bl    = rowSums(sapply(c(35:44, 46:48), gene_present), na.rm = TRUE)
+)
+
+target_sts <- c("ST307", "ST101", "ST512", "ST147", "ST131")
+
+make_row <- function(d) {
+  tibble(
+    N                    = nrow(d),
+    Species              = paste(sort(unique(
+                             ifelse(grepl("Klebsiella", d$Species, ignore.case = TRUE),
+                                    "K. pneumoniae", "E. coli"))), collapse = "/"),
+    Bloodstream          = paste0(sum(d$Source == "Bloodstream"),   "/", nrow(d),
+                                  " (", round(100*mean(d$Source == "Bloodstream")),   "%)"),
+    Respiratory          = paste0(sum(d$Source == "Respiratory"),   "/", nrow(d),
+                                  " (", round(100*mean(d$Source == "Respiratory")),   "%)"),
+    Wound_Surgical       = paste0(sum(d$Source == "Wound/Surgical"),"/", nrow(d),
+                                  " (", round(100*mean(d$Source == "Wound/Surgical")),"%)"),
+    Ascites              = paste0(sum(d$Source == "Ascites"),       "/", nrow(d),
+                                  " (", round(100*mean(d$Source == "Ascites")),       "%)"),
+    CAZ_MIC              = median(d$CAZ, na.rm = TRUE),
+    CAZ_R                = paste0(sum(d$CAZ > 16, na.rm = TRUE), "/", nrow(d),
+                                  " (", round(100*mean(d$CAZ > 16, na.rm = TRUE)),    "%)"),
+    MER_MIC              = median(d$MER, na.rm = TRUE),
+    CTXM15               = paste0(sum(d$CTXM15), "/", nrow(d)),
+    SHV28                = paste0(sum(d$SHV28),  "/", nrow(d)),
+    OXA1                 = paste0(sum(d$OXA1),   "/", nrow(d)),
+    armA                 = paste0(sum(d$armA),   "/", nrow(d)),
+    fosA                 = paste0(sum(d$fosA),   "/", nrow(d)),
+    IncX3                = paste0(sum(d$incX3),  "/", nrow(d)),
+    BL_genes             = round(median(d$n_bl, na.rm = TRUE), 1)
+  )
+}
+
+st_rows <- purrr::map(target_sts, ~ make_row(dplyr::filter(df, ST == .x))) |>
+  dplyr::bind_rows() |>
+  dplyr::mutate(ST = target_sts, .before = 1)
+
+total_row <- make_row(dplyr::filter(df, ST %in% target_sts)) |>
+  dplyr::mutate(ST = "Total (typed isolates)", .before = 1)
+
+tbl <- dplyr::bind_rows(st_rows, total_row)
+```
+
+```{r table1}
+tbl |>
+  kable(
+    col.names = c(
+      "Sequence type", "n", "Species",
+      "Bloodstream", "Respiratory", "Wound/Surgical", "Ascites",
+      "Median CAZ-AVI MIC (mg/L)", "CAZ-AVI resistant (>16 mg/L)",
+      "Median MER MIC (mg/L)",
+      "*blaCTX-M-15*", "*blaSHV-28*", "*blaOXA-1*",
+      "*armA*", "*fosA*", "IncX3",
+      "Median extra\nβ-lactamase genes"
+    ),
+    format = "html",
+    escape = FALSE,
+    align  = c("l","c","l","c","c","c","c","c","c","c","c","c","c","c","c","c","c")
+  ) |>
+  kable_styling(
+    bootstrap_options = c("striped", "hover", "condensed", "bordered"),
+    full_width = TRUE,
+    font_size  = 13
+  ) |>
+  add_header_above(c(
+    " "                            = 3,
+    "Clinical source (n/N, %)"    = 4,
+    "Antimicrobial susceptibility" = 3,
+    "Key resistance genes (n/N)"  = 5,
+    "Gene burden"                  = 2
+  )) |>
+  row_spec(nrow(tbl) - 1,
+           extra_css = "border-bottom: 2px solid #555;") |>
+  row_spec(nrow(tbl), bold = TRUE, background = "#F2F2F2") |>
+  footnote(
+    general = paste0(
+      "CAZ-AVI, ceftazidime-avibactam; MER, meropenem; BL, beta-lactamase. ",
+      "CAZ-AVI resistance defined as MIC >16 mg/L (EUCAST breakpoint). ",
+      "TMR provisionally classified as Wound/Surgical — please verify. ",
+      "10 isolates with unresolved sequence type are excluded from ST-stratified rows."
+    ),
+    general_title  = "Abbreviations: ",
+    footnote_as_chunk = TRUE
+  )
+```

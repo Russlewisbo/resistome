@@ -1,0 +1,8 @@
+{
+  "permission": {
+    "bash": {
+      "cd /Users/russelllewis/Desktop/resistome": "allow",
+      "python3 -c \"\ncontent = open('manuscript.qmd').read()\ncontent = content.replace('  docx:\\n    toc: false', '  docx:\\n    toc: false\\n    prefer-html: true')\nopen('manuscript.qmd', 'w').write(content)\nprint('Done')\n\"": "allow"
+    }
+  }
+}
